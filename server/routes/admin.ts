@@ -223,7 +223,7 @@ router.post('/users/:email/subscription', async (req, res) => {
 // DELETE /users/:id: Delete a user (both auth and database)
 router.delete('/users/:id', async (req, res) => {
     const { id } = req.params;
-    
+
     try {
         // First, get the user details from database
         const { data: user, error: fetchError } = await supabase
@@ -241,35 +241,37 @@ router.delete('/users/:id', async (req, res) => {
             return res.status(400).json({ error: 'Cannot delete super admin' });
         }
 
-        // Delete from Supabase Auth (this will cascade to related tables if configured)
-        const { error: authError } = await supabase.auth.admin.deleteUser(id);
-        
-        if (authError) {
-            console.error('Error deleting user from auth:', authError);
-            return res.status(500).json({ error: `Auth deletion failed: ${authError.message}` });
+        // Use the Supabase RPC function for complete deletion
+        const { data, error: rpcError } = await supabase.rpc('delete_user_completely', {
+            user_id_to_delete: id
+        });
+
+        if (rpcError) {
+            console.error('Error deleting user via RPC:', rpcError);
+
+            // Fallback to manual deletion if RPC fails
+            console.log('Attempting manual deletion fallback...');
+
+            // Delete from auth first
+            const { error: authError } = await supabase.auth.admin.deleteUser(id);
+
+            if (authError) {
+                console.error('Error deleting user from auth:', authError);
+                return res.status(500).json({ error: `Auth deletion failed: ${authError.message}` });
+            }
+
+            // Manual cleanup of email-based tables
+            await Promise.all([
+                supabase.from('timed_shares').delete().or(`sender_email.eq.${user.email},recipient_email.eq.${user.email}`),
+                supabase.from('emergency_requests').delete().or(`requester_email.eq.${user.email},target_user_email.eq.${user.email}`)
+            ]);
+
+            // Database tables will cascade delete automatically
+            await supabase.from('users').delete().eq('id', id);
         }
 
-        // Delete from users table (in case auth deletion didn't cascade)
-        const { error: dbError } = await supabase
-            .from('users')
-            .delete()
-            .eq('id', id);
-
-        if (dbError) {
-            console.error('Error deleting user from database:', dbError);
-            // Don't fail if this errors - auth user is already deleted
-        }
-
-        // Also clean up related data
-        await Promise.all([
-            supabase.from('vaults').delete().eq('user_id', id),
-            supabase.from('shared_items').delete().eq('user_id', id),
-            supabase.from('emergency_requests').delete().eq('requester_email', user.email),
-            supabase.from('breach_checks').delete().eq('user_id', id)
-        ]);
-
-        res.json({ 
-            success: true, 
+        res.json({
+            success: true,
             message: `User ${user.email} deleted successfully`,
             deletedUserId: id
         });
