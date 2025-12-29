@@ -1,11 +1,25 @@
-{
-    "name": "lens-vault",
-        "version": "1.0.0",
-            "scripts": {
-        "test": "playwright test",
-            "test:ui": "playwright test --ui",
-                "test:headed": "playwright test --headed",
-                    "test:report": "playwright show-report",
-                        "test:debug": "playwright test --debug"
-    }
-}
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+    testDir: './tests',
+    fullyParallel: false,
+    forbidOnly: !!process.env.CI,
+    retries: process.env.CI ? 2 : 0,
+    workers: 1,
+    reporter: [
+        ['html'],
+        ['list']
+    ],
+    use: {
+        trace: 'on-first-retry',
+        screenshot: 'on',
+        video: 'retain-on-failure',
+    },
+    projects: [
+        {
+            name: 'electron',
+            testMatch: '**/*.spec.ts',
+        },
+    ],
+    outputDir: 'test-results',
+});
