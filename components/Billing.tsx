@@ -1,0 +1,380 @@
+import React, { useState, useEffect } from 'react';
+import { usePaystackPayment } from 'react-paystack';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
+import { Button } from './ui/button';
+import { Badge } from './ui/badge';
+import { Check, X, ChevronDown, ChevronUp, Shield as ShieldIcon, Globe, TrendingDown } from 'lucide-react';
+import { Subscription } from '../types';
+import { Switch } from './ui/switch';
+import { useToast } from './ui/use-toast';
+import { getUserPricing, calculateRegionalPricing } from '../services/pricingService';
+import type { RegionalPricing } from '../services/pricingService';
+
+interface BillingProps {
+  subscription: Subscription;
+  onPlanChange: (plan: 'free' | 'premium' | 'family' | 'business') => void;
+  email: string;
+}
+
+// Paystack supported currencies
+const PAYSTACK_CURRENCIES = ['NGN', 'GHS', 'ZAR', 'KES', 'USD'];
+
+const PlanFeature: React.FC<{ text: string; included: boolean }> = ({ text, included }) => (
+  <li className="flex items-start gap-3 text-sm">
+    {included ? (
+      <Check className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+    ) : (
+      <X className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+    )}
+    <span className={included ? 'text-foreground' : 'text-muted-foreground'}>{text}</span>
+  </li>
+);
+
+const VISIBLE_FEATURES = 4;
+
+// Helper component to use the hook for each plan button
+const PaystackButtonWrapper = ({
+  email,
+  amount,
+  currency,
+  planId,
+  disabled,
+  onSuccess,
+  onClose,
+  isCurrent,
+  isLoading,
+  buttonText
+}: any) => {
+  const config = {
+    reference: (new Date()).getTime().toString(),
+    email: email,
+    amount: Math.round(amount * 100), // Amount in kobo/cents
+    currency: currency,
+    publicKey: (import.meta as any).env.VITE_PAYSTACK_PUBLIC_KEY || '',
+  };
+
+  const initializePayment = usePaystackPayment(config);
+
+  return (
+    <Button
+      className="w-full bg-gradient-accent"
+      onClick={() => {
+        if (planId === 'free') {
+          onSuccess({ reference: 'free-switch' });
+        } else {
+          // @ts-ignore
+          initializePayment(onSuccess, onClose);
+        }
+      }}
+      disabled={disabled}
+    >
+      {isLoading ? 'Processing...' : buttonText}
+    </Button>
+  );
+};
+
+const Billing: React.FC<BillingProps> = ({ subscription, onPlanChange, email }) => {
+  const [isYearly, setIsYearly] = useState(false);
+  const [expandedFeatures, setExpandedFeatures] = useState<Record<string, boolean>>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [regionalPricing, setRegionalPricing] = useState<RegionalPricing | null>(null);
+  const [loadingPricing, setLoadingPricing] = useState(true);
+  const { toast } = useToast();
+
+  // Fetch regional pricing on mount
+  useEffect(() => {
+    async function fetchPricing() {
+      try {
+        setLoadingPricing(true);
+        const pricing = await getUserPricing();
+        setRegionalPricing(pricing);
+      } catch (error) {
+        console.error('Failed to fetch pricing:', error);
+        // Fallback to Nigeria pricing
+        setRegionalPricing(calculateRegionalPricing('NG'));
+      } finally {
+        setLoadingPricing(false);
+      }
+    }
+    fetchPricing();
+  }, []);
+
+  const toggleFeatures = (planId: string) => {
+    setExpandedFeatures(prev => ({ ...prev, [planId]: !prev[planId] }));
+  };
+
+  const handlePaystackSuccess = async (reference: any, planId: string) => {
+    try {
+      setIsLoading(true);
+      const { apiService } = await import('../services/apiService');
+
+      const result = await apiService.verifyPayment(reference.reference, planId, isYearly ? 'yearly' : 'monthly');
+
+      if (result.success) {
+        toast({ title: 'Payment Successful', description: result.message, variant: 'default' });
+        onPlanChange(planId as any);
+        window.location.reload();
+      } else {
+        toast({ title: 'Verification Failed', description: result.message, variant: 'destructive' });
+      }
+    } catch (error) {
+      console.error(error);
+      toast({ title: 'Error', description: 'Payment verification failed', variant: 'destructive' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePaystackClose = () => {
+    setIsLoading(false);
+    console.log('Payment closed');
+  };
+
+  if (loadingPricing || !regionalPricing) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Get payment currency (Paystack supported or fallback to USD)
+  const paymentCurrency = PAYSTACK_CURRENCIES.includes(regionalPricing.currency.code)
+    ? regionalPricing.currency.code
+    : 'USD';
+
+  // Define plans with dynamic pricing
+  const plans = [
+    {
+      name: 'Free Plan',
+      id: 'free' as const,
+      price: `${regionalPricing.currency.symbol}0`,
+      priceSuffix: '/ month',
+      yearlyPrice: `${regionalPricing.currency.symbol}0 / year`,
+      amount: 0,
+      description: 'For basic personal use.',
+      features: [
+        { text: 'Store unlimited passwords', included: true },
+        { text: 'Sync across 1 Device', included: true },
+        { text: 'Strong password generator', included: true },
+        { text: 'Family & Sharing', included: false },
+        { text: 'Dark web email breach monitoring', included: false },
+        { text: 'Priority support', included: false },
+      ],
+    },
+    {
+      name: 'Premium Plan',
+      id: 'premium' as const,
+      price: regionalPricing.displayPrices.premium,
+      priceSuffix: '/ month',
+      yearlyPrice: `${regionalPricing.currency.symbol}${regionalPricing.prices.premium.annual.toLocaleString()} / year`,
+      amount: isYearly ? regionalPricing.prices.premium.annual : regionalPricing.prices.premium.monthly,
+      savings: regionalPricing.savings.premium,
+      description: 'For professionals and remote workers.',
+      features: [
+        { text: 'Store unlimited passwords', included: true },
+        { text: 'Auto-fill passwords & 2FA codes', included: true },
+        { text: 'Sync across up to 3 devices', included: true },
+        { text: 'Dark web email breach monitoring', included: true },
+        { text: 'Secure notes & document storage', included: true },
+        { text: 'Emergency access recovery', included: true },
+        { text: 'Encrypted cloud backup', included: true },
+        { text: 'Priority password reset support', included: true },
+      ],
+      isMostPopular: true,
+    },
+    {
+      name: 'Family Plan',
+      id: 'family' as const,
+      price: regionalPricing.displayPrices.family,
+      priceSuffix: '/ month',
+      yearlyPrice: `${regionalPricing.currency.symbol}${regionalPricing.prices.family.annual.toLocaleString()} / year`,
+      amount: isYearly ? regionalPricing.prices.family.annual : regionalPricing.prices.family.monthly,
+      savings: regionalPricing.savings.family,
+      description: 'For your whole family.',
+      features: [
+        { text: 'All Premium features', included: true },
+        { text: 'Up to 5 user accounts', included: true },
+        { text: 'Up to 15 devices', included: true },
+        { text: 'Shared family password vault', included: true },
+        { text: 'Secure sharing (Netflix, DSTV, etc.)', included: true },
+        { text: 'Parental account oversight (optional)', included: true },
+        { text: 'Dark web monitoring for the entire family', included: true },
+      ],
+    },
+    {
+      name: 'Business Plan',
+      id: 'business' as const,
+      price: regionalPricing.displayPrices.business,
+      priceSuffix: '/ month',
+      yearlyPrice: `${regionalPricing.currency.symbol}${regionalPricing.prices.business.annual.toLocaleString()} / year`,
+      amount: isYearly ? regionalPricing.prices.business.annual : regionalPricing.prices.business.monthly,
+      description: 'For small businesses up to 10 users.',
+      features: [
+        { text: 'All Family features', included: true },
+        { text: '10 user seats', included: true },
+        { text: 'Up to 30 devices', included: true },
+        { text: 'Role-based access controls', included: true },
+        { text: 'Audit logs & login tracking', included: true },
+        { text: 'Staff password hygiene scoring', included: true },
+        { text: 'Dark web domain monitoring', included: true },
+        { text: 'Admin dashboard', included: true },
+      ],
+    },
+  ];
+
+  return (
+    <div className="space-y-8">
+      {/* Regional Pricing Banner */}
+      <Card className="border-primary/50 bg-gradient-to-r from-primary/5 to-primary/10">
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-3 mb-2">
+            <Globe className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold text-lg">Your Regional Pricing</h3>
+          </div>
+          <p className="text-sm text-muted-foreground mb-3">
+            Detected location: <strong>{regionalPricing.countryName}</strong> • Currency: <strong>{regionalPricing.currency.code}</strong>
+          </p>
+          {regionalPricing.savings.premium.vs1Password > 0 && (
+            <div className="flex items-center gap-2 text-sm">
+              <TrendingDown className="h-4 w-4 text-green-500" />
+              <span className="text-green-600 dark:text-green-400 font-medium">
+                Save {regionalPricing.savings.premium.vs1Password}% vs 1Password • {regionalPricing.savings.premium.vsLastPass}% vs LastPass
+              </span>
+            </div>
+          )}
+          {paymentCurrency !== regionalPricing.currency.code && (
+            <p className="text-xs text-muted-foreground mt-2">
+              💡 Payments processed in {paymentCurrency} (Paystack supported currency)
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Current Subscription */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl">Your Lens Vault Protection Level</CardTitle>
+          <CardDescription>
+            Manage your password vault, security features, and billing.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+            <div>
+              <h3 className="font-semibold text-lg">
+                {plans.find(p => p.id === subscription.plan)?.name}
+                {subscription.status === 'trialing' && <Badge variant="secondary" className="ml-2">Trial</Badge>}
+              </h3>
+              {subscription.status === 'trialing' && subscription.trialEndsAt && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Trial ends on {new Date(subscription.trialEndsAt).toLocaleDateString()}.
+                </p>
+              )}
+            </div>
+            <Button variant="outline" disabled>Manage Subscription</Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Billing Cycle Toggle */}
+      <div className="text-center">
+        <div className="flex justify-center items-center gap-4 my-8">
+          <span className={!isYearly ? 'font-semibold text-primary' : 'text-muted-foreground'}>Monthly</span>
+          <Switch checked={isYearly} onCheckedChange={setIsYearly} />
+          <span className={isYearly ? 'font-semibold text-primary' : 'text-muted-foreground'}>
+            Yearly <Badge variant="secondary">Save up to 17%</Badge>
+          </span>
+        </div>
+
+        {/* Plans Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
+          {plans.map(plan => {
+            const isCurrent = subscription.plan === plan.id;
+            const isExpanded = !!expandedFeatures[plan.id];
+            const topFeatures = plan.features.slice(0, VISIBLE_FEATURES);
+            const otherFeatures = plan.features.slice(VISIBLE_FEATURES);
+
+            return (
+              <Card key={plan.id} className={`flex flex-col rounded-xl p-6 text-left card-lift-hover ${plan.isMostPopular ? 'card-glow border-primary/50' : ''}`}>
+                {plan.isMostPopular && (
+                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-accent">
+                    Recommended
+                  </Badge>
+                )}
+                <div className="flex-grow">
+                  <h3 className="text-lg font-semibold">{plan.name}</h3>
+                  <p className="text-sm text-muted-foreground h-10 mt-1">{plan.description}</p>
+                  <div className="my-6">
+                    <span className="text-4xl font-bold">
+                      {isYearly ? plan.yearlyPrice.split(' ')[0] : plan.price}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {isYearly ? ' / year' : plan.priceSuffix}
+                    </span>
+                  </div>
+
+                  {/* Savings Badge */}
+                  {plan.savings && plan.savings.vs1Password > 0 && (
+                    <Badge variant="secondary" className="mb-4">
+                      💰 {plan.savings.vs1Password}% cheaper than 1Password
+                    </Badge>
+                  )}
+
+                  <ul className="space-y-3">
+                    {topFeatures.map((feature, i) => (
+                      <PlanFeature key={`top-${i}`} text={feature.text} included={feature.included} />
+                    ))}
+                  </ul>
+
+                  {otherFeatures.length > 0 && (
+                    <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isExpanded ? 'max-h-96' : 'max-h-0'}`}>
+                      <div className="border-t my-4"></div>
+                      <ul className="space-y-3">
+                        {otherFeatures.map((feature, i) => (
+                          <PlanFeature key={`other-${i}`} text={feature.text} included={feature.included} />
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+                <div className="mt-6">
+                  {otherFeatures.length > 0 && (
+                    <Button variant="ghost" size="sm" className="w-full mb-3 text-muted-foreground" onClick={() => toggleFeatures(plan.id)}>
+                      {isExpanded ? <ChevronUp className="h-4 w-4 mr-2" /> : <ChevronDown className="h-4 w-4 mr-2" />}
+                      {isExpanded ? 'Show less' : `Show all ${plan.features.length} features`}
+                    </Button>
+                  )}
+                  <PaystackButtonWrapper
+                    email={email}
+                    amount={plan.amount}
+                    currency={paymentCurrency}
+                    planId={plan.id}
+                    disabled={isCurrent || isLoading}
+                    onSuccess={(ref: any) => handlePaystackSuccess(ref, plan.id)}
+                    onClose={handlePaystackClose}
+                    isCurrent={isCurrent}
+                    isLoading={isLoading}
+                    buttonText={isCurrent ? 'Current Plan' : `Switch to ${plan.name}`}
+                  />
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Security Footer */}
+      <div className="mt-12 text-center text-sm text-muted-foreground space-y-2">
+        <div className="flex items-center justify-center gap-2">
+          <ShieldIcon className="h-4 w-4 text-green-500" />
+          <p>Secure checkout powered by Paystack.</p>
+        </div>
+        <p>100% encrypted passwords. Zero-knowledge infrastructure.</p>
+        <p className="text-xs">Supported currencies: NGN, GHS, ZAR, KES, USD</p>
+      </div>
+    </div>
+  );
+};
+
+export default Billing;
