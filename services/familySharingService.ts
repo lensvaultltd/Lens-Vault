@@ -49,7 +49,7 @@ export interface AuditLog {
 }
 
 class FamilySharingService {
-    // Email notification helper
+    // Email notification helper - adapted for EmailJS Contact Us template
     private async sendEmail(to: string, subject: string, message: string): Promise<void> {
         try {
             // Check if EmailJS is configured
@@ -62,14 +62,15 @@ class FamilySharingService {
                 return;
             }
 
+            // Adapt to EmailJS Contact Us template format
             await emailjs.send(
                 serviceId,
                 templateId,
                 {
-                    to_email: to,
-                    subject: subject,
-                    message: message,
-                    from_name: 'Lens Vault'
+                    to_name: to,
+                    from_name: 'Lens Vault Team',
+                    message: `Subject: ${subject}\n\n${message}`,
+                    reply_to: 'LensVault@proton.me'
                 },
                 publicKey
             );
