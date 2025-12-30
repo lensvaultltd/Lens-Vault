@@ -6,10 +6,33 @@ export const AccessLogs: React.FC<{ userEmail: string }> = ({ userEmail }) => {
     const [logs, setLogs] = useState<AccessLog[]>([]);
 
     useEffect(() => {
-        fetch(`/api/share/logs?email=${userEmail}`)
-            .then(res => res.json())
-            .then(data => setLogs(data))
-            .catch(err => console.error(err));
+        const fetchLogs = () => {
+            fetch(`/api/share/logs?email=${userEmail}`)
+                .then(res => res.json())
+                .then(data => setLogs(data))
+                .catch(err => console.error(err));
+        };
+
+        fetchLogs();
+
+        // Real-time updates for logs
+        let subscription: any;
+        import('../../lib/supabase').then(({ supabase }) => {
+            subscription = supabase
+                .channel('public:audit_logs')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'audit_logs' }, (payload) => {
+                    // Refresh logs or append
+                    // Ideally check if log belongs to user, but RLS on fetch helps.
+                    // For simplicity, just refetch or optimistically add if we verify user_id match
+                    // We'll refetch to be safe and get joined data if needed
+                    fetchLogs();
+                })
+                .subscribe();
+        });
+
+        return () => {
+            if (subscription) subscription.unsubscribe();
+        };
     }, [userEmail]);
 
     return (
