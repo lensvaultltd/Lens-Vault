@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import emailjs from '@emailjs/browser';
+import { Resend } from 'resend';
 
 export interface DigitalWill {
     id: string;
@@ -49,31 +49,40 @@ export interface AuditLog {
 }
 
 class FamilySharingService {
-    // Email notification helper - adapted for EmailJS Contact Us template
+    // Email notification helper using Resend
     private async sendEmail(to: string, subject: string, message: string): Promise<void> {
         try {
-            // Check if EmailJS is configured
-            const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
-            const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
-            const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+            // Check if Resend is configured
+            const apiKey = import.meta.env.VITE_RESEND_API_KEY;
 
-            if (!serviceId || !templateId || !publicKey) {
-                console.warn('EmailJS not configured, skipping email notification');
+            if (!apiKey) {
+                console.warn('Resend API key not configured, skipping email notification');
                 return;
             }
 
-            // Adapt to EmailJS Contact Us template format
-            await emailjs.send(
-                serviceId,
-                templateId,
-                {
-                    to_name: to,
-                    from_name: 'Lens Vault Team',
-                    message: `Subject: ${subject}\n\n${message}`,
-                    reply_to: 'LensVault@proton.me'
-                },
-                publicKey
-            );
+            const resend = new Resend(apiKey);
+
+            // Send email using Resend
+            const { data, error } = await resend.emails.send({
+                from: 'Lens Vault <noreply@lensvault.com>',
+                to: [to],
+                subject: subject,
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                        <h2 style="color: #2563eb;">Lens Vault</h2>
+                        <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                            ${message.replace(/\n/g, '<br>')}
+                        </div>
+                        <p style="color: #6b7280; font-size: 12px;">
+                            This is an automated message from Lens Vault. Please do not reply to this email.
+                        </p>
+                    </div>
+                `,
+            });
+
+            if (error) {
+                console.error('Resend API error:', error);
+            }
         } catch (error) {
             console.error('Email send error:', error);
             // Don't throw - email failure shouldn't break the main flow
