@@ -8,4 +8,13 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.error("Missing Supabase URL or Anon Key. Please check your .env file.");
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    // Mobile-optimized settings
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+    flowType: 'pkce', // More secure for mobile apps
+  }
+});
