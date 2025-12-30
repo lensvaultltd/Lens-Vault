@@ -472,7 +472,20 @@ function App() {
     toast({ variant: "success", title: "Sharing settings updated" });
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // CRITICAL: Save data before logging out to prevent data loss
+    if (user && masterPassword) {
+      try {
+        await saveData();
+        toast({ variant: "info", title: "Saving vault..." });
+        // Small delay to ensure save completes
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } catch (error) {
+        console.error('Failed to save before logout:', error);
+        toast({ variant: "destructive", title: "Warning: Failed to save vault before logout" });
+      }
+    }
+
     setUser(null);
     setMasterPassword(null);
     EncryptionService.setMasterPassword(null);
@@ -480,7 +493,7 @@ function App() {
     setFolders([]);
     setAuthorizedContacts([]);
     setViewingAs(null);
-    toast({ variant: "info", title: "Logged out successfully" });
+    toast({ variant: "success", title: "Logged out successfully" });
   };
 
   const handleExitSharedView = () => {
