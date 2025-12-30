@@ -108,13 +108,60 @@ const Billing: React.FC<BillingProps> = ({ subscription, onPlanChange, email }) 
     try {
       setIsLoading(true);
       const { apiService } = await import('../services/apiService');
+      const { supabase } = await import('../lib/supabase');
 
+      // 1. Verify payment with backend
       const result = await apiService.verifyPayment(reference.reference, planId, isYearly ? 'yearly' : 'monthly');
 
       if (result.success) {
-        toast({ title: 'Payment Successful', description: result.message, variant: 'default' });
+        // 2. Calculate subscription end date
+        const now = new Date();
+        const endDate = new Date(now);
+        if (isYearly) {
+          endDate.setFullYear(endDate.getFullYear() + 1);
+        } else {
+          endDate.setMonth(endDate.getMonth() + 1);
+        }
+
+        // 3. Update Supabase immediately - THIS IS THE KEY CHANGE!
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { error: updateError } = await supabase
+            .from('users')
+            .update({
+              subscription_plan: planId,
+              subscription_status: 'active',
+              subscription_ends_at: endDate.toISOString(),
+              last_payment_reference: reference.reference
+            })
+            .eq('id', user.id);
+
+          if (updateError) {
+            console.error('Failed to update subscription in Supabase:', updateError);
+            toast({
+              title: 'Warning',
+              description: 'Payment successful but subscription update failed. Please contact support.',
+              variant: 'destructive'
+            });
+            return;
+          }
+        }
+
+        // 4. Show success message
+        toast({
+          title: 'Payment Successful! 🎉',
+          description: `Your ${planId.charAt(0).toUpperCase() + planId.slice(1)} plan is now active!`,
+          variant: 'default',
+          duration: 5000
+        });
+
+        // 5. Update local state
         onPlanChange(planId as any);
-        window.location.reload();
+
+        // 6. Reload to show new features
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
       } else {
         toast({ title: 'Verification Failed', description: result.message, variant: 'destructive' });
       }
