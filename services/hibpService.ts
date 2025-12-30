@@ -1,12 +1,14 @@
 
 import { EncryptionService } from '../lib/encryption';
 
-const HIBP_API_KEY = process.env.HIBP_API_KEY;
+// Use Vite environment variable (works in browser)
+const HIBP_API_KEY = import.meta.env?.VITE_HIBP_API_KEY || '';
 
 export const hibpService = {
     /**
      * Checks if a password has been exposed in data breaches using k-Anonymity.
      * Returns the number of times the password has been seen.
+     * This API is FREE and doesn't require an API key!
      */
     async checkPassword(password: string): Promise<number> {
         try {
@@ -46,11 +48,13 @@ export const hibpService = {
 
     /**
      * Checks if an email has been involved in data breaches.
-     * Requires an API Key.
+     * NOTE: HIBP API key costs $3.50/month. For free alternative, we skip this
+     * and let Gemini AI do web search instead.
      */
     async checkEmail(email: string): Promise<any[]> {
+        // If no API key, return empty array and let Gemini AI search the web
         if (!HIBP_API_KEY) {
-            console.warn('HIBP_API_KEY not found. Skipping real email breach check.');
+            console.log('HIBP API key not configured. Using AI web search for breach detection.');
             return [];
         }
 
