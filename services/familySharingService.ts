@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import emailjs from '@emailjs/browser';
 
 export interface DigitalWill {
     id: string;
@@ -48,6 +49,36 @@ export interface AuditLog {
 }
 
 class FamilySharingService {
+    // Email notification helper
+    private async sendEmail(to: string, subject: string, message: string): Promise<void> {
+        try {
+            // Check if EmailJS is configured
+            const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+            const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+            const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+
+            if (!serviceId || !templateId || !publicKey) {
+                console.warn('EmailJS not configured, skipping email notification');
+                return;
+            }
+
+            await emailjs.send(
+                serviceId,
+                templateId,
+                {
+                    to_email: to,
+                    subject: subject,
+                    message: message,
+                    from_name: 'Lens Vault'
+                },
+                publicKey
+            );
+        } catch (error) {
+            console.error('Email send error:', error);
+            // Don't throw - email failure shouldn't break the main flow
+        }
+    }
+
     // ===== DIGITAL WILL =====
 
     async createDigitalWill(will: Omit<DigitalWill, 'id' | 'created_at' | 'updated_at' | 'released'>): Promise<{ success: boolean; message: string; data?: DigitalWill }> {
@@ -65,6 +96,13 @@ class FamilySharingService {
                 will.sender_email,
                 'digital_will_created',
                 `Created digital will for ${will.beneficiary_email} - Condition: ${will.condition}`
+            );
+
+            // Send email notification to beneficiary
+            await this.sendEmail(
+                will.beneficiary_email,
+                'You have been added as a beneficiary',
+                `${will.sender_email} has designated you as a beneficiary in their Digital Will on Lens Vault.\n\nThis means you may receive access to their vault under the specified conditions.\n\nFor more information, visit https://lensvault.vercel.app`
             );
 
             return { success: true, message: 'Digital will created successfully', data };
@@ -124,6 +162,16 @@ class FamilySharingService {
                 `Submitted emergency access request for ${request.target_user_email} - Type: ${request.request_type}`
             );
 
+            // Send email to all admins
+            const adminEmails = ['micup04@gmail.com', 'LensVault@proton.me', 'Lensvault.ltd@gmail.com'];
+            for (const adminEmail of adminEmails) {
+                await this.sendEmail(
+                    adminEmail,
+                    'New Emergency Access Request',
+                    `A new emergency access request has been submitted:\n\nRequester: ${request.requester_email}\nTarget Account: ${request.target_user_email}\nReason: ${request.request_type}\n${request.custom_reason ? `Details: ${request.custom_reason}\n` : ''}\nPlease review this request in the Lens Vault admin panel.`
+                );
+            }
+
             return { success: true, message: 'Emergency request submitted successfully', data };
         } catch (error: any) {
             console.error('Create emergency request error:', error);
@@ -165,6 +213,13 @@ class FamilySharingService {
 
     async approveEmergencyRequest(requestId: string, adminNotes?: string): Promise<{ success: boolean; message: string }> {
         try {
+            // Get request details first
+            const { data: request } = await supabase
+                .from('emergency_requests')
+                .select('*')
+                .eq('id', requestId)
+                .single();
+
             const { error } = await supabase
                 .from('emergency_requests')
                 .update({
@@ -176,18 +231,26 @@ class FamilySharingService {
 
             if (error) throw error;
 
-            // Get request details for audit log
-            const { data: request } = await supabase
-                .from('emergency_requests')
-                .select('*')
-                .eq('id', requestId)
-                .single();
-
             if (request) {
+                // Create audit log
                 await this.createAuditLog(
                     request.target_user_email,
                     'emergency_request_approved',
                     `Emergency access approved for ${request.requester_email}`
+                );
+
+                // Send approval email to requester
+                await this.sendEmail(
+                    request.requester_email,
+                    'Emergency Access Request Approved - Lens Vault',
+                    `Dear User,\n\nYour emergency access request for ${request.target_user_email} has been APPROVED by the Lens Vault team.\n\n${adminNotes ? `Admin Notes: ${adminNotes}\n\n` : ''}You can now proceed with accessing the vault as per your request.\n\nIf you have any questions, please contact support@lensvault.com\n\nBest regards,\nLens Vault Team`
+                );
+
+                // Notify target user
+                await this.sendEmail(
+                    request.target_user_email,
+                    'Emergency Access Granted - Lens Vault',
+                    `Dear User,\n\nAn emergency access request from ${request.requester_email} has been approved by our admin team.\n\nReason: ${request.request_type}\n${request.custom_reason ? `Details: ${request.custom_reason}\n` : ''}\nThis user now has access to your vault as per the emergency protocol.\n\nIf you believe this is an error, please contact support@lensvault.com immediately.\n\nBest regards,\nLens Vault Team`
                 );
             }
 
@@ -200,6 +263,13 @@ class FamilySharingService {
 
     async rejectEmergencyRequest(requestId: string, adminNotes?: string): Promise<{ success: boolean; message: string }> {
         try {
+            // Get request details first
+            const { data: request } = await supabase
+                .from('emergency_requests')
+                .select('*')
+                .eq('id', requestId)
+                .single();
+
             const { error } = await supabase
                 .from('emergency_requests')
                 .update({
@@ -210,6 +280,16 @@ class FamilySharingService {
                 .eq('id', requestId);
 
             if (error) throw error;
+
+            if (request) {
+                // Send rejection email to requester
+                await this.sendEmail(
+                    request.requester_email,
+                    'Emergency Access Request Rejected - Lens Vault',
+                    `Dear User,\n\nWe regret to inform you that your emergency access request for ${request.target_user_email} has been REJECTED by the Lens Vault team.\n\n${adminNotes ? `Reason: ${adminNotes}\n\n` : ''}If you believe this decision was made in error or have additional information to provide, please contact support@lensvault.com\n\nBest regards,\nLens Vault Team`
+                );
+            }
+
             return { success: true, message: 'Emergency request rejected' };
         } catch (error: any) {
             console.error('Reject request error:', error);

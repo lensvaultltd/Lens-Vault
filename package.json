@@ -18,6 +18,7 @@
     "@capacitor/android": "^8.0.0",
     "@capacitor/cli": "^8.0.0",
     "@capacitor/core": "^8.0.0",
+    "@emailjs/browser": "^4.4.1",
     "@google/genai": "^1.28.0",
     "@google/generative-ai": "^0.24.1",
     "@simplewebauthn/browser": "^13.2.2",
