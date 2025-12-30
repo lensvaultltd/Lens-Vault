@@ -221,8 +221,8 @@ export function calculateRegionalPricing(countryCode: string): RegionalPricing {
         prices,
         savings,
         displayPrices: {
-            premium: formatPrice(prices.premium.annualMonthly),
-            family: formatPrice(prices.family.annualMonthly),
+            premium: formatPrice(prices.premium.monthly), // Changed from annualMonthly to monthly
+            family: formatPrice(prices.family.monthly),   // Changed from annualMonthly to monthly
             business: formatPrice(prices.business.monthly)
         }
     };
