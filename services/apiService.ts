@@ -44,22 +44,29 @@ export const apiService = {
       if (authError) throw authError;
       if (!authData.user) throw new Error("No user returned from Supabase Auth");
 
-      const token = authData.session?.access_token;
-      const masterPasswordHash = EncryptionService.hashPassword(masterPassword);
+      console.log("Signup: Supabase user created successfully");
 
-      console.log("Signup: Supabase user created. Syncing with backend...");
+      // 2. Store user keys in Supabase database if provided
+      if (publicKey && encryptedPrivateKey && authData.user) {
+        const { error: keysError } = await supabase
+          .from('users')
+          .update({
+            public_key: publicKey,
+            encrypted_private_key: encryptedPrivateKey
+          })
+          .eq('id', authData.user.id);
 
-      // 2. Sync user data with backend (create vault, store keys)
-      // Note: If email confirmation is enabled, session might be null here.
-      // For this app, we assume email confirmation is off or we handle it gracefully.
-      if (!token) {
+        if (keysError) {
+          console.error("Failed to store keys:", keysError);
+        }
+      }
+
+      // 3. Check if email confirmation is required
+      if (!authData.session) {
         return { success: true, message: 'Account created. Please verify your email to log in.' };
       }
 
-      return await request('/auth/signup', {
-        method: 'POST',
-        body: JSON.stringify({ token, email, masterPasswordHash, publicKey, encryptedPrivateKey }),
-      });
+      return { success: true, message: 'Account created successfully!' };
     } catch (error: any) {
       console.error("Signup error:", error);
       let message = "Signup failed.";
@@ -76,13 +83,38 @@ export const apiService = {
       });
 
       if (error) throw error;
-      const token = data.session.access_token;
-      const masterPasswordHash = EncryptionService.hashPassword(masterPassword);
+      if (!data.user) throw new Error("No user returned from Supabase");
 
-      return request('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ token, email, masterPasswordHash }),
-      });
+      console.log("Login: Supabase auth successful");
+
+      // Fetch user data from database
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', data.user.id)
+        .single();
+
+      if (userError) {
+        console.error("Failed to fetch user data:", userError);
+      }
+
+      const user: User = {
+        id: data.user.id,
+        email: data.user.email!,
+        subscription: (userData?.subscription_plan as any) || 'free',
+        isAdmin: userData?.is_admin || false,
+        createdAt: new Date(data.user.created_at),
+      };
+
+      // Return keys if available
+      const keys = userData?.public_key && userData?.encrypted_private_key
+        ? {
+          publicKey: userData.public_key,
+          encryptedPrivateKey: userData.encrypted_private_key
+        }
+        : undefined;
+
+      return { success: true, message: 'Login successful', user, keys };
     } catch (error: any) {
       console.error("Login error:", error);
       let message = "Login failed.";

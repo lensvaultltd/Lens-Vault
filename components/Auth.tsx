@@ -209,15 +209,8 @@ const Auth: React.FC<AuthProps> = ({ onAuthenticated }) => {
       // Login
       const result = await apiService.login(email, password);
       if (result.success && result.user) {
-        // If we received keys, we should store them in memory (or context)
-        // For this simple app, we'll attach them to the user object or handle them in App.tsx via callback
-        // The onAuthenticated callback only takes user and password.
-        // We might need to update the signature or store keys in a global state/service.
-        // For now, let's just proceed. The App component will need to fetch keys or we pass them.
-
-        // Let's update onAuthenticated to accept keys if possible, or just rely on the fact that we have the master password
-        // and can fetch/decrypt the private key when needed.
-        onAuthenticated(result.user, password);
+        // Pass user, password, and keys (if available) to onAuthenticated
+        onAuthenticated(result.user, password, result.keys);
       } else {
         setError(result.message);
       }
