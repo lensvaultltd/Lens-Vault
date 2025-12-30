@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, Lock, Unlock, Plus } from 'lucide-react';
-import { TimedShare } from '../../types';
+import { TimedShare, IPasswordEntry } from '../../types';
 
-export const TimedAccess: React.FC<{ userEmail: string }> = ({ userEmail }) => {
+export const TimedAccess: React.FC<{ userEmail: string; entries: IPasswordEntry[] }> = ({ userEmail, entries }) => {
     const [shares, setShares] = useState<TimedShare[]>([]);
     const [loading, setLoading] = useState(true);
     const [showCreate, setShowCreate] = useState(false);
 
     // Form state
     const [recipient, setRecipient] = useState('');
-    const [data, setData] = useState(''); // In real app, this is a vault item selector
+    const [selectedEntryId, setSelectedEntryId] = useState(''); // Changed from 'data' to 'selectedEntryId'
     const [duration, setDuration] = useState('1');
     const [unit, setUnit] = useState<'weeks' | 'months' | 'years'>('months');
 
@@ -97,15 +97,27 @@ export const TimedAccess: React.FC<{ userEmail: string }> = ({ userEmail }) => {
                             />
                         </div>
                         <div>
-                            <label className="block text-sm text-gray-400 mb-1">Vault Data (Mock Selector)</label>
-                            <input
-                                type="text"
-                                value={data}
-                                onChange={e => setData(e.target.value)}
-                                placeholder="Select vault item..."
+                            <label className="block text-sm text-gray-400 mb-1">Select Vault Item to Share</label>
+                            <select
+                                value={selectedEntryId}
+                                onChange={e => setSelectedEntryId(e.target.value)}
                                 className="w-full bg-gray-700 text-white p-2 rounded border border-gray-600"
                                 required
-                            />
+                            >
+                                <option value="">-- Select an item --</option>
+                                {entries.map(entry => (
+                                    <option key={entry.id} value={entry.id}>
+                                        {entry.type === 'login' && `🔐 ${entry.siteName || entry.name}`}
+                                        {entry.type === 'credit-card' && `💳 ${entry.name}`}
+                                        {entry.type === 'bank-account' && `🏦 ${entry.name}`}
+                                        {entry.type === 'secure-note' && `📝 ${entry.name}`}
+                                        {entry.type === 'identity' && `👤 ${entry.name}`}
+                                    </option>
+                                ))}
+                            </select>
+                            <p className="text-xs text-gray-500 mt-1">
+                                This item will be encrypted and shared after the specified time period.
+                            </p>
                         </div>
                         <div>
                             <label className="block text-sm text-gray-400 mb-1">Release After</label>

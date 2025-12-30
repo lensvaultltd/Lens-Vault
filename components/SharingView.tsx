@@ -133,7 +133,7 @@ const SharingView: React.FC<SharingViewProps> = ({
                     </TabsContent>
 
                     <TabsContent value="timed" className="p-4">
-                        <TimedAccess />
+                        <TimedAccess userEmail="" entries={entries} />
                     </TabsContent>
 
                     <TabsContent value="emergency" className="p-4">
