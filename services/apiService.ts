@@ -246,10 +246,10 @@ export const apiService = {
   async requestPasswordReset(email: string): Promise<{ success: boolean; message: string }> {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + '/reset-password', // Ensure this route exists or goes to home
+        redirectTo: 'https://lensvault.vercel.app/reset-password',
       });
       if (error) throw error;
-      return { success: true, message: "Password reset link sent to your email." };
+      return { success: true, message: "Password reset link sent to your email. Check your inbox!" };
     } catch (error: any) {
       console.error("Reset password error:", error);
       return { success: false, message: error.message || "Failed to send reset email." };
