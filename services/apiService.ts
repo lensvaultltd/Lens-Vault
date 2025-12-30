@@ -126,9 +126,9 @@ export const apiService = {
   async logout(): Promise<{ success: boolean; message: string }> {
     try {
       await supabase.auth.signOut();
-      return request('/auth/logout', { method: 'POST' });
+      return { success: true, message: 'Logged out successfully' };
     } catch (error) {
-      return { success: false, message: "Logout failed locally" };
+      return { success: false, message: "Logout failed" };
     }
   },
 
@@ -139,21 +139,38 @@ export const apiService = {
   },
 
   async getVault(email: string, masterPassword: string): Promise<{ success: boolean; data?: { passwords: IPasswordEntry[], folders: Folder[], authorizedContacts: AuthorizedContact[] }, message: string }> {
-    const result = await request('/vault'); // Token attached automatically
-
-    if (!result.success) {
-      return result;
-    }
-
-    if (!result.data) {
-      // New vault or empty
-      return { success: true, data: { passwords: [], folders: [], authorizedContacts: [] }, message: 'New vault created.' };
-    }
-
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return { success: false, message: 'Not authenticated' };
+      }
+
+      // Fetch vault data from Supabase
+      const { data: vaultData, error } = await supabase
+        .from('vaults')
+        .select('encrypted_data')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) {
+        // If no vault exists yet, return empty vault
+        if (error.code === 'PGRST116') {
+          return { success: true, data: { passwords: [], folders: [], authorizedContacts: [] }, message: 'New vault created.' };
+        }
+        throw error;
+      }
+
+      if (!vaultData || !vaultData.encrypted_data) {
+        // New vault or empty
+        return { success: true, data: { passwords: [], folders: [], authorizedContacts: [] }, message: 'New vault created.' };
+      }
+
+      // Decrypt vault data
       EncryptionService.setMasterPassword(masterPassword);
-      const decrypted = EncryptionService.decrypt(result.data);
+      const decrypted = EncryptionService.decrypt(vaultData.encrypted_data);
       const data = JSON.parse(decrypted);
+
       // Ensure date fields are converted back to Date objects
       data.passwords = (data.passwords || []).map((p: any) => ({
         ...p,
@@ -162,21 +179,42 @@ export const apiService = {
         passwordHistory: (p.passwordHistory || []).map((h: any) => ({ ...h, date: new Date(h.date) }))
       }));
       data.authorizedContacts = (data.authorizedContacts || []).map((c: any) => ({ ...c, createdAt: new Date(c.createdAt) }));
+
       return { success: true, data, message: 'Vault fetched successfully.' };
-    } catch (error) {
+    } catch (error: any) {
+      console.error('getVault error:', error);
       return { success: false, message: 'Failed to decrypt vault. Master password may be incorrect.' };
     }
   },
 
   async saveVault(email: string, masterPassword: string, vaultData: { passwords: IPasswordEntry[], folders: Folder[], authorizedContacts: AuthorizedContact[] }): Promise<{ success: boolean; message: string }> {
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return { success: false, message: 'Not authenticated' };
+      }
+
+      // Encrypt vault data
       EncryptionService.setMasterPassword(masterPassword);
       const encryptedData = EncryptionService.encrypt(JSON.stringify(vaultData));
-      return request('/vault', {
-        method: 'PUT',
-        body: JSON.stringify({ encryptedData }),
-      });
-    } catch (error) {
+
+      // Save to Supabase (upsert)
+      const { error } = await supabase
+        .from('vaults')
+        .upsert({
+          user_id: user.id,
+          encrypted_data: encryptedData,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id'
+        });
+
+      if (error) throw error;
+
+      return { success: true, message: 'Vault saved successfully.' };
+    } catch (error: any) {
+      console.error('saveVault error:', error);
       return { success: false, message: 'Failed to encrypt and save vault.' };
     }
   },
