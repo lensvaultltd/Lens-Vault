@@ -293,12 +293,7 @@ const Billing: React.FC<BillingProps> = ({ subscription, onPlanChange, email }) 
                       </span>
                     </div>
 
-                    {/* Savings Badge */}
-                    {plan.savings && plan.savings.vs1Password > 0 && (
-                      <Badge variant="secondary" className="mb-4">
-                        💰 {plan.savings.vs1Password}% cheaper than 1Password
-                      </Badge>
-                    )}
+                    {/* Removed competitor comparison to avoid legal issues */}
 
                     <ul className="space-y-3">
                       {topFeatures.map((feature, i) => (
@@ -344,15 +339,17 @@ const Billing: React.FC<BillingProps> = ({ subscription, onPlanChange, email }) 
         </div>
       )}
 
-      {/* Security Footer */}
-      <div className="mt-12 text-center text-sm text-muted-foreground space-y-2">
-        <div className="flex items-center justify-center gap-2">
-          <ShieldIcon className="h-4 w-4 text-green-500" />
-          <p>Secure checkout powered by Paystack.</p>
+      {/* Security Footer - Only show Paystack badge when pricing is visible */}
+      {showPricing && (
+        <div className="mt-12 text-center text-sm text-muted-foreground space-y-2">
+          <div className="flex items-center justify-center gap-2">
+            <ShieldIcon className="h-4 w-4 text-green-500" />
+            <p>Secure checkout powered by Paystack.</p>
+          </div>
+          <p>100% encrypted passwords. Zero-knowledge infrastructure.</p>
+          <p className="text-xs">Supported currencies: NGN, GHS, ZAR, KES, USD</p>
         </div>
-        <p>100% encrypted passwords. Zero-knowledge infrastructure.</p>
-        <p className="text-xs">Supported currencies: NGN, GHS, ZAR, KES, USD</p>
-      </div>
+      )}
     </div>
   );
 };

@@ -11,7 +11,7 @@ import { supabase } from '../lib/supabase';
 const BASE_PRICES_USD = {
     premium: 29.99,  // vs 1Password $35.88, LastPass $36, Bitwarden $10
     family: 49.99,   // vs 1Password $59.88, Bitwarden $40
-    business: 110.00 // Adjusted to achieve ₦5,500/month in Nigeria (was 89.99)
+    business: 130.00 // Adjusted to achieve ₦6,500/month in Nigeria
 };
 
 // Competitor prices for comparison (annual USD)
