@@ -300,46 +300,25 @@ export const EmergencyAccess: React.FC<EmergencyAccessProps> = ({ userEmail, isA
                                     required
                                 />
                             )}
-                            {requestType === 'other' && (
+                        </div>
+
+                        <div>
+                            <label className="block text-gray-300 mb-2">Upload Proof Document</label>
+                            <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-red-500 transition-colors cursor-pointer relative">
                                 <input
-                                    type="text"
-                                    placeholder="Please specify additional details..."
-                                    value={(window as any).customRequestReason || ''}
-                                    onChange={e => (window as any).customRequestReason = e.target.value} // Simple hack for now, ideally state
-                                    // Better: We need a state variable for this.
-                                    // React requires set state. I will use a ref or add a state in a separate edit if variable not available.
-                                    // Actually, let's use a newly created state variable if I can inject it, 
-                                    // or reuse a field. 
-                                    // I'll stick to modifying the select options first, but I need to inject state logic.
-                                    // Since I can't easily inject new `const [customReason, ...]` variables at the top of the file with this tool 
-                                    // without rewriting the whole file, I will use a different approach.
-                                    // I will use `requestType` to store the value? No.
-                                    // I'll rewrite the component state in a previous step? 
-                                    // No, 'replace_file_content' is for contiguous blocks.
-                                    // I'll use 'multi_replace_file_content' to add state and modify render.
-                                    // Wait, I am constrained to one tool usage here? No.
-                                    // I should CANCEL this and use multi_replace.
-                                    className="mt-2 w-full bg-gray-900 border border-gray-600 rounded p-3 text-white"
+                                    type="file"
+                                    className="opacity-0 absolute inset-0 cursor-pointer"
+                                    onChange={e => setFile(e.target.files ? e.target.files[0] : null)}
+                                    accept=".pdf,.jpg,.png"
                                 />
-                            )}
-
-                            <div>
-                                <label className="block text-gray-300 mb-2">Upload Proof Document</label>
-                                <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-red-500 transition-colors cursor-pointer relative">
-                                    <input
-                                        type="file"
-                                        className="opacity-0 absolute inset-0 cursor-pointer"
-                                        onChange={e => setFile(e.target.files ? e.target.files[0] : null)}
-                                        accept=".pdf,.jpg,.png"
-                                    />
-                                    <FileText className="w-8 h-8 text-gray-500 mx-auto mb-2" />
-                                    <p className="text-sm text-gray-400">{file ? file.name : 'Upload Death Certificate / Medical Report'}</p>
-                                </div>
+                                <FileText className="w-8 h-8 text-gray-500 mx-auto mb-2" />
+                                <p className="text-sm text-gray-400">{file ? file.name : 'Upload Death Certificate / Medical Report'}</p>
                             </div>
+                        </div>
 
-                            <button disabled={loading} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded transition-colors">
-                                {loading ? 'Submitting...' : 'Submit Request to Admin'}
-                            </button>
+                        <button disabled={loading} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded transition-colors">
+                            {loading ? 'Submitting...' : 'Submit Request to Admin'}
+                        </button>
                     </form>
                 </div>
             )}
