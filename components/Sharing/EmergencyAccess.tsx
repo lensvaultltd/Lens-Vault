@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { AlertTriangle, FileText, Check, X, Shield, Settings, HeartPulse, User } from 'lucide-react';
 import { EmergencyRequest, DigitalWillConfig } from '../../types';
+import { familySharingService } from '../../services/familySharingService';
+import { toast } from '../ui/use-toast';
 
 interface EmergencyAccessProps {
     userEmail: string;
@@ -70,13 +72,28 @@ export const EmergencyAccess: React.FC<EmergencyAccessProps> = ({ userEmail, isA
     const handleConfigSave = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        await fetch('/api/share/will/config', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: userEmail, ...willConfig })
-        });
-        setLoading(false);
-        alert('Digital Will settings saved.');
+
+        try {
+            const result = await familySharingService.createDigitalWill({
+                sender_email: userEmail,
+                beneficiary_email: willConfig.beneficiaryEmail || '',
+                encrypted_vault_data: JSON.stringify(willConfig),
+                condition: willConfig.condition as any,
+                custom_condition: (willConfig as any).customCondition,
+                action: willConfig.action as any
+            });
+
+            if (result.success) {
+                toast({ variant: 'success', title: 'Digital Will saved successfully' });
+            } else {
+                toast({ variant: 'destructive', title: 'Failed to save', description: result.message });
+            }
+        } catch (error) {
+            console.error('Save will error:', error);
+            toast({ variant: 'destructive', title: 'Error saving Digital Will' });
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleRequestSubmit = async (e: React.FormEvent) => {
@@ -99,25 +116,22 @@ export const EmergencyAccess: React.FC<EmergencyAccessProps> = ({ userEmail, isA
 
             const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(fileName);
 
-            const res = await fetch('/api/share/emergency/request', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    requesterEmail: userEmail,
-                    targetUserEmail: targetEmail,
-                    proofDocumentUrl: publicUrl,
-                    requestType
-                })
+            const result = await familySharingService.createEmergencyRequest({
+                requester_email: userEmail,
+                target_user_email: targetEmail,
+                proof_document_url: publicUrl,
+                request_type: requestType as any,
+                custom_reason: requestType === 'other' ? customRequestReason : undefined
             });
 
             setLoading(false);
-            if (res.ok) {
-                alert('Emergency request sent to System Admin for review.');
+            if (result.success) {
+                toast({ variant: 'success', title: 'Emergency request submitted', description: 'Admin will review your request' });
                 setTargetEmail('');
                 setFile(null);
+                setCustomRequestReason('');
             } else {
-                const err = await res.json();
-                alert(`Failed to send request: ${err.error || 'Unknown error'}`);
+                toast({ variant: 'destructive', title: 'Failed to submit request', description: result.message });
             }
         } catch (err: any) {
             setLoading(false);
@@ -127,22 +141,21 @@ export const EmergencyAccess: React.FC<EmergencyAccessProps> = ({ userEmail, isA
     };
 
     const handleAdminApprove = async (reqId: string, action: string) => {
-        const { supabase } = await import('../../lib/supabase');
-        const { data: { session } } = await supabase.auth.getSession();
-        const token = session?.access_token;
+        try {
+            const result = action === 'reject'
+                ? await familySharingService.rejectEmergencyRequest(reqId, 'Rejected by admin')
+                : await familySharingService.approveEmergencyRequest(reqId, 'Approved by admin');
 
-        await fetch(`/api/share/emergency/approve-admin`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ requestId: reqId, action, adminNotes: 'Verified' })
-        });
-
-        alert('Request Processed.');
-        // List will update via Realtime or manual filter
-        setAdminRequests(prev => prev.filter(r => r.id !== reqId));
+            if (result.success) {
+                toast({ variant: 'success', title: 'Request processed' });
+                setAdminRequests(prev => prev.filter(r => r.id !== reqId));
+            } else {
+                toast({ variant: 'destructive', title: 'Failed to process request', description: result.message });
+            }
+        } catch (error) {
+            console.error('Admin approve error:', error);
+            toast({ variant: 'destructive', title: 'Error processing request' });
+        }
     };
 
     // Realtime Subscription
