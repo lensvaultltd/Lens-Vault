@@ -79,6 +79,7 @@ const Billing: React.FC<BillingProps> = ({ subscription, onPlanChange, email }) 
   const [isLoading, setIsLoading] = useState(false);
   const [regionalPricing, setRegionalPricing] = useState<RegionalPricing | null>(null);
   const [loadingPricing, setLoadingPricing] = useState(true);
+  const [showPricing, setShowPricing] = useState(false);
   const { toast } = useToast();
 
   // Fetch regional pricing on mount
@@ -225,31 +226,6 @@ const Billing: React.FC<BillingProps> = ({ subscription, onPlanChange, email }) 
 
   return (
     <div className="space-y-8">
-      {/* Regional Pricing Banner */}
-      <Card className="border-primary/50 bg-gradient-to-r from-primary/5 to-primary/10">
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-3 mb-2">
-            <Globe className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold text-lg">Your Regional Pricing</h3>
-          </div>
-          <p className="text-sm text-muted-foreground mb-3">
-            Detected location: <strong>{regionalPricing.countryName}</strong> • Currency: <strong>{regionalPricing.currency.code}</strong>
-          </p>
-          {regionalPricing.savings.premium.vs1Password > 0 && (
-            <div className="flex items-center gap-2 text-sm">
-              <TrendingDown className="h-4 w-4 text-green-500" />
-              <span className="text-green-600 dark:text-green-400 font-medium">
-                Save {regionalPricing.savings.premium.vs1Password}% vs 1Password • {regionalPricing.savings.premium.vsLastPass}% vs LastPass
-              </span>
-            </div>
-          )}
-          {paymentCurrency !== regionalPricing.currency.code && (
-            <p className="text-xs text-muted-foreground mt-2">
-              💡 Payments processed in {paymentCurrency} (Paystack supported currency)
-            </p>
-          )}
-        </CardContent>
-      </Card>
 
       {/* Current Subscription */}
       <Card>
@@ -272,97 +248,101 @@ const Billing: React.FC<BillingProps> = ({ subscription, onPlanChange, email }) 
                 </p>
               )}
             </div>
-            <Button variant="outline" disabled>Manage Subscription</Button>
+            <Button variant="outline" onClick={() => setShowPricing(!showPricing)}>
+              {showPricing ? 'Hide Pricing' : 'Manage Subscription'}
+            </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Billing Cycle Toggle */}
-      <div className="text-center">
-        <div className="flex justify-center items-center gap-4 my-8">
-          <span className={!isYearly ? 'font-semibold text-primary' : 'text-muted-foreground'}>Monthly</span>
-          <Switch checked={isYearly} onCheckedChange={setIsYearly} />
-          <span className={isYearly ? 'font-semibold text-primary' : 'text-muted-foreground'}>
-            Yearly <Badge variant="secondary">Save up to 17%</Badge>
-          </span>
-        </div>
+      {/* Billing Cycle Toggle - Only show when showPricing is true */}
+      {showPricing && (
+        <div className="text-center">
+          <div className="flex justify-center items-center gap-4 my-8">
+            <span className={!isYearly ? 'font-semibold text-primary' : 'text-muted-foreground'}>Monthly</span>
+            <Switch checked={isYearly} onCheckedChange={setIsYearly} />
+            <span className={isYearly ? 'font-semibold text-primary' : 'text-muted-foreground'}>
+              Yearly <Badge variant="secondary">Save up to 17%</Badge>
+            </span>
+          </div>
 
-        {/* Plans Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
-          {plans.map(plan => {
-            const isCurrent = subscription.plan === plan.id;
-            const isExpanded = !!expandedFeatures[plan.id];
-            const topFeatures = plan.features.slice(0, VISIBLE_FEATURES);
-            const otherFeatures = plan.features.slice(VISIBLE_FEATURES);
+          {/* Plans Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
+            {plans.map(plan => {
+              const isCurrent = subscription.plan === plan.id;
+              const isExpanded = !!expandedFeatures[plan.id];
+              const topFeatures = plan.features.slice(0, VISIBLE_FEATURES);
+              const otherFeatures = plan.features.slice(VISIBLE_FEATURES);
 
-            return (
-              <Card key={plan.id} className={`flex flex-col rounded-xl p-6 text-left card-lift-hover ${plan.isMostPopular ? 'card-glow border-primary/50' : ''}`}>
-                {plan.isMostPopular && (
-                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-accent">
-                    Recommended
-                  </Badge>
-                )}
-                <div className="flex-grow">
-                  <h3 className="text-lg font-semibold">{plan.name}</h3>
-                  <p className="text-sm text-muted-foreground h-10 mt-1">{plan.description}</p>
-                  <div className="my-6">
-                    <span className="text-4xl font-bold">
-                      {isYearly ? plan.yearlyPrice.split(' ')[0] : plan.price}
-                    </span>
-                    <span className="text-muted-foreground">
-                      {isYearly ? ' / year' : plan.priceSuffix}
-                    </span>
-                  </div>
-
-                  {/* Savings Badge */}
-                  {plan.savings && plan.savings.vs1Password > 0 && (
-                    <Badge variant="secondary" className="mb-4">
-                      💰 {plan.savings.vs1Password}% cheaper than 1Password
+              return (
+                <Card key={plan.id} className={`flex flex-col rounded-xl p-6 text-left card-lift-hover ${plan.isMostPopular ? 'card-glow border-primary/50' : ''}`}>
+                  {plan.isMostPopular && (
+                    <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-accent">
+                      Recommended
                     </Badge>
                   )}
-
-                  <ul className="space-y-3">
-                    {topFeatures.map((feature, i) => (
-                      <PlanFeature key={`top-${i}`} text={feature.text} included={feature.included} />
-                    ))}
-                  </ul>
-
-                  {otherFeatures.length > 0 && (
-                    <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isExpanded ? 'max-h-96' : 'max-h-0'}`}>
-                      <div className="border-t my-4"></div>
-                      <ul className="space-y-3">
-                        {otherFeatures.map((feature, i) => (
-                          <PlanFeature key={`other-${i}`} text={feature.text} included={feature.included} />
-                        ))}
-                      </ul>
+                  <div className="flex-grow">
+                    <h3 className="text-lg font-semibold">{plan.name}</h3>
+                    <p className="text-sm text-muted-foreground h-10 mt-1">{plan.description}</p>
+                    <div className="my-6">
+                      <span className="text-4xl font-bold">
+                        {isYearly ? plan.yearlyPrice.split(' ')[0] : plan.price}
+                      </span>
+                      <span className="text-muted-foreground">
+                        {isYearly ? ' / year' : plan.priceSuffix}
+                      </span>
                     </div>
-                  )}
-                </div>
-                <div className="mt-6">
-                  {otherFeatures.length > 0 && (
-                    <Button variant="ghost" size="sm" className="w-full mb-3 text-muted-foreground" onClick={() => toggleFeatures(plan.id)}>
-                      {isExpanded ? <ChevronUp className="h-4 w-4 mr-2" /> : <ChevronDown className="h-4 w-4 mr-2" />}
-                      {isExpanded ? 'Show less' : `Show all ${plan.features.length} features`}
-                    </Button>
-                  )}
-                  <PaystackButtonWrapper
-                    email={email}
-                    amount={plan.amount}
-                    currency={paymentCurrency}
-                    planId={plan.id}
-                    disabled={isCurrent || isLoading}
-                    onSuccess={(ref: any) => handlePaystackSuccess(ref, plan.id)}
-                    onClose={handlePaystackClose}
-                    isCurrent={isCurrent}
-                    isLoading={isLoading}
-                    buttonText={isCurrent ? 'Current Plan' : `Switch to ${plan.name}`}
-                  />
-                </div>
-              </Card>
-            );
-          })}
+
+                    {/* Savings Badge */}
+                    {plan.savings && plan.savings.vs1Password > 0 && (
+                      <Badge variant="secondary" className="mb-4">
+                        💰 {plan.savings.vs1Password}% cheaper than 1Password
+                      </Badge>
+                    )}
+
+                    <ul className="space-y-3">
+                      {topFeatures.map((feature, i) => (
+                        <PlanFeature key={`top-${i}`} text={feature.text} included={feature.included} />
+                      ))}
+                    </ul>
+
+                    {otherFeatures.length > 0 && (
+                      <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isExpanded ? 'max-h-96' : 'max-h-0'}`}>
+                        <div className="border-t my-4"></div>
+                        <ul className="space-y-3">
+                          {otherFeatures.map((feature, i) => (
+                            <PlanFeature key={`other-${i}`} text={feature.text} included={feature.included} />
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-6">
+                    {otherFeatures.length > 0 && (
+                      <Button variant="ghost" size="sm" className="w-full mb-3 text-muted-foreground" onClick={() => toggleFeatures(plan.id)}>
+                        {isExpanded ? <ChevronUp className="h-4 w-4 mr-2" /> : <ChevronDown className="h-4 w-4 mr-2" />}
+                        {isExpanded ? 'Show less' : `Show all ${plan.features.length} features`}
+                      </Button>
+                    )}
+                    <PaystackButtonWrapper
+                      email={email}
+                      amount={plan.amount}
+                      currency={paymentCurrency}
+                      planId={plan.id}
+                      disabled={isCurrent || isLoading}
+                      onSuccess={(ref: any) => handlePaystackSuccess(ref, plan.id)}
+                      onClose={handlePaystackClose}
+                      isCurrent={isCurrent}
+                      isLoading={isLoading}
+                      buttonText={isCurrent ? 'Current Plan' : `Switch to ${plan.name}`}
+                    />
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Security Footer */}
       <div className="mt-12 text-center text-sm text-muted-foreground space-y-2">
