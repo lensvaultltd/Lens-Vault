@@ -1,37 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { ShieldCheck, Activity } from 'lucide-react';
-import { AccessLog } from '../../types';
+import { familySharingService, type AuditLog } from '../../services/familySharingService';
 
 export const AccessLogs: React.FC<{ userEmail: string }> = ({ userEmail }) => {
-    const [logs, setLogs] = useState<AccessLog[]>([]);
+    const [logs, setLogs] = useState<AuditLog[]>([]);
 
     useEffect(() => {
-        const fetchLogs = () => {
-            fetch(`/api/share/logs?email=${userEmail}`)
-                .then(res => res.json())
-                .then(data => setLogs(data))
-                .catch(err => console.error(err));
-        };
+        // Fetch initial logs
+        familySharingService.getAuditLogs(userEmail).then(setLogs);
 
-        fetchLogs();
-
-        // Real-time updates for logs
-        let subscription: any;
-        import('../../lib/supabase').then(({ supabase }) => {
-            subscription = supabase
-                .channel('public:audit_logs')
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'audit_logs' }, (payload) => {
-                    // Refresh logs or append
-                    // Ideally check if log belongs to user, but RLS on fetch helps.
-                    // For simplicity, just refetch or optimistically add if we verify user_id match
-                    // We'll refetch to be safe and get joined data if needed
-                    fetchLogs();
-                })
-                .subscribe();
+        // Subscribe to real-time updates
+        const subscription = familySharingService.subscribeToAuditLogs(userEmail, (newLog) => {
+            setLogs(prev => [newLog, ...prev]);
         });
 
         return () => {
-            if (subscription) subscription.unsubscribe();
+            subscription.unsubscribe();
         };
     }, [userEmail]);
 
