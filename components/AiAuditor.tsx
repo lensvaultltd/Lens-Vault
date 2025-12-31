@@ -4,7 +4,8 @@ import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { IPasswordEntry } from '../types';
-import { getPasswordAudit, runDarkWebAudit } from '../services/geminiService';
+// Using NVIDIA NIM for better performance and reliability (1000 free credits)
+import { getPasswordAudit, runDarkWebAudit } from '../services/nvidiaService';
 import { Link } from 'lucide-react';
 import { toast } from './ui/use-toast';
 

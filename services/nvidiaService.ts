@@ -173,3 +173,17 @@ Format your response in clean HTML with proper headings, lists, and color-coded 
         return "<h2>Analysis Error</h2><p>An error occurred while analyzing the email for breaches. Please try again later.</p>";
     }
 };
+
+/**
+ * Run dark web audit (alias for getEmailAudit for compatibility)
+ * @param email - Email address to check for breaches
+ * @returns Object with report and sources
+ */
+export const runDarkWebAudit = async (email: string): Promise<{ report: string; sources: any[] }> => {
+    const report = await getEmailAudit(email);
+    return {
+        report,
+        sources: [] // NVIDIA NIM doesn't provide sources like Gemini, but we maintain API compatibility
+    };
+};
+
