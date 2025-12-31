@@ -133,13 +133,13 @@ const PasswordList: React.FC<PasswordListProps> = ({ entries, onEdit, onDelete, 
                 <Icon className="h-5 w-5" />
               </div>
 
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-base truncate">{entry.name}</h3>
+              <div className="flex-1 min-w-0 md:pl-4">
+                <h3 className="font-semibold text-base sm:text-lg truncate">{entry.name}</h3>
                 <p className="text-sm text-muted-foreground">{getSubtitle(entry)}</p>
               </div>
 
-              <div className="text-right flex-shrink-0 hidden sm:block">
-                <div className={`font-bold text-sm ${rightInfo.color}`}>{rightInfo.top}</div>
+              <div className="text-right flex-shrink-0 hidden sm:block md:min-w-[100px]">
+                <div className={`font-bold text-sm md:text-base ${rightInfo.color}`}>{rightInfo.top}</div>
                 <p className="text-xs text-muted-foreground">{rightInfo.bottom}</p>
               </div>
 
