@@ -64,33 +64,32 @@ export const getPasswordAudit = async (passwords: IPasswordEntry[]): Promise<str
         const breachedPasswords = breachChecks.filter(b => b && b.breached);
 
         // Create security audit prompt
-        const prompt = `You are a cybersecurity expert conducting a password security audit.
+        const prompt = `You're a friendly cybersecurity expert helping someone secure their passwords. Be conversational and helpful, not formal or robotic.
 
-**Password Analysis Data:**
-Total Passwords: ${loginEntries.length}
-Breached Passwords: ${breachedPasswords.length}
+Here's what you're analyzing:
+- Total passwords: ${loginEntries.length}
+- Passwords found in breaches: ${breachedPasswords.length}
 
-**Password Characteristics:**
+Password details:
 ${JSON.stringify(passwordData, null, 2)}
 
-**Breached Passwords:**
+Breached passwords:
 ${JSON.stringify(breachedPasswords, null, 2)}
 
-**Task:**
-Provide a comprehensive HTML-formatted security audit report with:
-1. Overall security score (0-100)
-2. Critical vulnerabilities found
-3. Specific recommendations for each weak password
-4. Best practices for password management
+Give them a quick, friendly security report in HTML format:
+1. Start with an overall security score (0-100) and what it means
+2. Point out any serious issues in plain English
+3. Give specific, actionable advice for weak passwords
+4. Share 2-3 quick tips for better password security
 
-Format your response in clean HTML with proper headings, lists, and emphasis.`;
+Keep it conversational, concise, and helpful - like you're texting a friend, not writing a formal report.`;
 
         // Call NVIDIA NIM API via Supabase Edge Function (avoids CORS)
         const response = await nvidiaClient.post('/nvidia-ai', {
             messages: [
                 {
                     role: 'system',
-                    content: 'You are a professional cybersecurity auditor specializing in password security. Provide detailed, actionable security recommendations in HTML format.'
+                    content: 'You are a friendly, knowledgeable cybersecurity expert. Speak naturally and conversationally - like you\'re helping a friend, not writing a formal report. Be concise, clear, and helpful. Use everyday language, not jargon. Keep responses under 200 words unless there are serious issues.'
                 },
                 {
                     role: 'user',
@@ -133,29 +132,28 @@ export const getEmailAudit = async (email: string): Promise<string> => {
         }
 
         // Create breach analysis prompt
-        const prompt = `You are a cybersecurity expert analyzing data breaches.
+        const prompt = `You're helping someone understand if their email was in any data breaches. Be friendly and reassuring, but honest.
 
-**Email:** ${email}
-**Breaches Found:** ${breaches.length}
+Email checked: ${email}
+Breaches found: ${breaches.length}
 
-**Breach Details:**
+Breach info:
 ${JSON.stringify(breaches, null, 2)}
 
-**Task:**
-Provide an HTML-formatted breach analysis report with:
-1. Severity assessment
-2. What data was compromised
-3. Immediate actions to take
-4. Long-term security recommendations
+Give them a quick, clear explanation in HTML:
+1. How serious is this? (use everyday language)
+2. What info was leaked?
+3. What should they do right now?
+4. How to stay safer going forward
 
-Format your response in clean HTML with proper headings, lists, and color-coded severity indicators.`;
+Be conversational and reassuring - like you're explaining this to a friend over coffee, not writing a security report.`;
 
         // Call NVIDIA NIM API via Supabase Edge Function (avoids CORS)
         const response = await nvidiaClient.post('/nvidia-ai', {
             messages: [
                 {
                     role: 'system',
-                    content: 'You are a cybersecurity expert specializing in data breach analysis. Provide clear, actionable advice in HTML format.'
+                    content: 'You are a friendly cybersecurity expert who explains things clearly without being scary or overly technical. Be conversational, reassuring, and helpful. Use simple language and keep it brief - under 150 words unless it\'s really serious.'
                 },
                 {
                     role: 'user',
