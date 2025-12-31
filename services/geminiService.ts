@@ -5,7 +5,7 @@ import { hibpService } from "./hibpService";
 // Initialize Gemini AI client
 const getAiClient = () => {
   // Use the specific Lens Vault App Key for Gemini (restricted to Generative Language API)
-  const apiKey = "AIzaSyCedRjcqw_jEev0mH6jO0PcNbdemC_7UVw";
+  const apiKey = "AIzaSyAq6YuqL-1JDwmuub9vVDGVs3rb41LfIb8";
 
   if (!apiKey) {
     console.error("GEMINI_API_KEY is missing!");
