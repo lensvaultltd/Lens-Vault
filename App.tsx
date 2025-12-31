@@ -126,6 +126,8 @@ import { IPasswordEntry, Folder, AuthorizedContact, IPasswordStrength, Subscript
 import ShareEntryDialog from './components/ShareEntryDialog';
 import FolderManager from './components/FolderManager';
 import Billing from './components/Billing';
+import WelcomeBanner from './components/WelcomeBanner';
+import ExpiryWarning from './components/ExpiryWarning';
 import { apiService } from './services/apiService';
 import { EncryptionService } from './lib/encryption';
 
