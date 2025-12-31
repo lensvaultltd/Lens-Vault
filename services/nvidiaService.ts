@@ -77,12 +77,19 @@ Breached passwords:
 ${JSON.stringify(breachedPasswords, null, 2)}
 
 Give them a quick, friendly security report in HTML format:
-1. Start with an overall security score (0-100) and what it means
-2. Point out any serious issues in plain English
-3. Give specific, actionable advice for weak passwords
-4. Share 2-3 quick tips for better password security
+1. Start with an overall security score (0-100) and what it means in 1-2 sentences
+2. Point out any serious issues using bullet points (<ul><li>)
+3. Give specific, actionable advice as a bulleted list
+4. Share 2-3 quick tips as bullet points
 
-Keep it conversational, concise, and helpful - like you're texting a friend, not writing a formal report.`;
+IMPORTANT FORMATTING:
+- Use <h3> for section headings
+- Use <ul> and <li> for all lists and bullet points
+- Add <br> tags or <p> tags to create spacing between sections
+- Keep paragraphs short (1-2 sentences max)
+- Use <strong> to highlight important points
+
+Keep it conversational, concise, and well-spaced - easy to scan and read!`;
 
         // Call NVIDIA NIM API via Supabase Edge Function (avoids CORS)
         const response = await nvidiaClient.post('/nvidia-ai', {
@@ -141,12 +148,19 @@ Breach info:
 ${JSON.stringify(breaches, null, 2)}
 
 Give them a quick, clear explanation in HTML:
-1. How serious is this? (use everyday language)
-2. What info was leaked?
-3. What should they do right now?
-4. How to stay safer going forward
+1. How serious is this? (1-2 sentences)
+2. What info was leaked? (use bullet points)
+3. What should they do right now? (bulleted action items)
+4. How to stay safer going forward (2-3 bullet points)
 
-Be conversational and reassuring - like you're explaining this to a friend over coffee, not writing a security report.`;
+FORMATTING RULES:
+- Use <h3> for section headings
+- Use <ul> and <li> for ALL lists
+- Add <br> or <p> tags between sections for spacing
+- Keep paragraphs to 1-2 sentences
+- Use <strong> for important warnings
+
+Make it easy to scan and read - not a wall of text!`;
 
         // Call NVIDIA NIM API via Supabase Edge Function (avoids CORS)
         const response = await nvidiaClient.post('/nvidia-ai', {
