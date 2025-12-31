@@ -5,10 +5,13 @@ import { supabase } from '../lib/supabaseClient';
 
 // NVIDIA NIM API Client - Using Supabase Edge Function to avoid CORS
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const nvidiaClient = axios.create({
     baseURL: `${SUPABASE_URL}/functions/v1`,
     headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'apikey': SUPABASE_ANON_KEY
     }
 });
 
