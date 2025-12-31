@@ -199,6 +199,23 @@ CREATE POLICY "Users can CRUD own folders" ON public.folders FOR ALL USING (auth
 DROP POLICY IF EXISTS "Users can CRUD own vault items" ON public.vault_items;
 CREATE POLICY "Users can CRUD own vault items" ON public.vault_items FOR ALL USING (auth.uid() = owner_id);
 
+-- Subscription enforcement: Limit password entries by plan
+DROP POLICY IF EXISTS "Free users limited to 50 passwords" ON public.vault_items;
+CREATE POLICY "Free users limited to 50 passwords"
+  ON public.vault_items FOR INSERT
+  WITH CHECK (
+    (SELECT subscription_plan FROM public.users WHERE id = auth.uid()) != 'free'
+    OR (SELECT COUNT(*) FROM public.vault_items WHERE owner_id = auth.uid()) < 50
+  );
+
+DROP POLICY IF EXISTS "Premium users limited to 1000 passwords" ON public.vault_items;
+CREATE POLICY "Premium users limited to 1000 passwords"
+  ON public.vault_items FOR INSERT
+  WITH CHECK (
+    (SELECT subscription_plan FROM public.users WHERE id = auth.uid()) NOT IN ('free', 'premium')
+    OR (SELECT COUNT(*) FROM public.vault_items WHERE owner_id = auth.uid()) < 1000
+  );
+
 -- Subscription notifications policies
 DROP POLICY IF EXISTS "Users can view their own notifications" ON public.subscription_notifications;
 CREATE POLICY "Users can view their own notifications"
