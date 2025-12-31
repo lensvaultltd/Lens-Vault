@@ -1,12 +1,13 @@
 import axios from 'axios';
 import { IPasswordEntry } from '../types';
 import { hibpService } from './hibpService';
+import { supabase } from '../lib/supabaseClient';
 
-// NVIDIA NIM API Client
+// NVIDIA NIM API Client - Using Supabase Edge Function to avoid CORS
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const nvidiaClient = axios.create({
-    baseURL: 'https://integrate.api.nvidia.com/v1',
+    baseURL: `${SUPABASE_URL}/functions/v1`,
     headers: {
-        'Authorization': `Bearer ${import.meta.env.VITE_NVIDIA_API_KEY}`,
         'Content-Type': 'application/json'
     }
 });
@@ -81,9 +82,8 @@ Provide a comprehensive HTML-formatted security audit report with:
 
 Format your response in clean HTML with proper headings, lists, and emphasis.`;
 
-        // Call NVIDIA NIM API
-        const response = await nvidiaClient.post('/chat/completions', {
-            model: SECURITY_MODEL,
+        // Call NVIDIA NIM API via Supabase Edge Function (avoids CORS)
+        const response = await nvidiaClient.post('/nvidia-ai', {
             messages: [
                 {
                     role: 'system',
@@ -95,8 +95,7 @@ Format your response in clean HTML with proper headings, lists, and emphasis.`;
                 }
             ],
             temperature: 0.2,  // Low temperature for consistent security analysis
-            max_tokens: 2048,
-            top_p: 0.7
+            max_tokens: 2048
         });
 
         return response.data.choices[0].message.content;
@@ -148,9 +147,8 @@ Provide an HTML-formatted breach analysis report with:
 
 Format your response in clean HTML with proper headings, lists, and color-coded severity indicators.`;
 
-        // Call NVIDIA NIM API
-        const response = await nvidiaClient.post('/chat/completions', {
-            model: SECURITY_MODEL,
+        // Call NVIDIA NIM API via Supabase Edge Function (avoids CORS)
+        const response = await nvidiaClient.post('/nvidia-ai', {
             messages: [
                 {
                     role: 'system',
@@ -162,8 +160,7 @@ Format your response in clean HTML with proper headings, lists, and color-coded 
                 }
             ],
             temperature: 0.3,
-            max_tokens: 2048,
-            top_p: 0.7
+            max_tokens: 2048
         });
 
         return response.data.choices[0].message.content;
