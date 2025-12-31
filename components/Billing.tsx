@@ -100,6 +100,18 @@ const Billing: React.FC<BillingProps> = ({ subscription, onPlanChange, email }) 
     fetchPricing();
   }, []);
 
+  // Check if user's country is supported by Paystack
+  useEffect(() => {
+    if (regionalPricing && !PAYSTACK_CURRENCIES.includes(regionalPricing.currency)) {
+      toast({
+        variant: 'destructive',
+        title: 'Payment Not Available in Your Region',
+        description: `Paystack payments are currently only available in Nigeria, Ghana, South Africa, and Kenya. For other regions, please contact support@lensvault.com`,
+        duration: 10000
+      });
+    }
+  }, [regionalPricing, toast]);
+
   const toggleFeatures = (planId: string) => {
     setExpandedFeatures(prev => ({ ...prev, [planId]: !prev[planId] }));
   };
