@@ -43,6 +43,7 @@ jobs:
       - name: Build Android APK
         run: |
           cd android
+          chmod +x gradlew
           ./gradlew assembleRelease
 
       - name: Upload APK
@@ -79,8 +80,7 @@ jobs:
       - name: Capacitor Sync
         run: npx cap sync ios
 
-      - name: Select Xcode
-        run: sudo xcode-select -switch /Applications/Xcode_15.0.app
+
 
       - name: Build iOS
         run: |
