@@ -9,6 +9,8 @@ import { Switch } from './ui/switch';
 import { useToast } from './ui/use-toast';
 import { getUserPricing, calculateRegionalPricing } from '../services/pricingService';
 import type { RegionalPricing } from '../services/pricingService';
+import FlutterwaveButton from './FlutterwaveButton';
+import { selectPaymentGateway, verifyFlutterwavePayment } from '../services/flutterwaveService';
 
 interface BillingProps {
   subscription: Subscription;
@@ -16,8 +18,8 @@ interface BillingProps {
   email: string;
 }
 
-// Paystack supported currencies
-const PAYSTACK_CURRENCIES = ['NGN', 'GHS', 'ZAR', 'KES', 'USD'];
+// Paystack supported currencies (African markets)
+const PAYSTACK_CURRENCIES = ['NGN', 'GHS', 'ZAR', 'KES'];
 
 const PlanFeature: React.FC<{ text: string; included: boolean }> = ({ text, included }) => (
   <li className="flex items-start gap-3 text-sm">
@@ -80,6 +82,7 @@ const Billing: React.FC<BillingProps> = ({ subscription, onPlanChange, email }) 
   const [regionalPricing, setRegionalPricing] = useState<RegionalPricing | null>(null);
   const [loadingPricing, setLoadingPricing] = useState(true);
   const [showPricing, setShowPricing] = useState(false);
+  const [paymentGateway, setPaymentGateway] = useState<'paystack' | 'flutterwave'>('paystack');
   const { toast } = useToast();
 
   // Fetch regional pricing on mount
@@ -100,17 +103,17 @@ const Billing: React.FC<BillingProps> = ({ subscription, onPlanChange, email }) 
     fetchPricing();
   }, []);
 
-  // Check if user's country is supported by Paystack
+  // Select payment gateway based on currency
   useEffect(() => {
-    if (regionalPricing && !PAYSTACK_CURRENCIES.includes(regionalPricing.currency)) {
-      toast({
-        variant: 'destructive',
-        title: 'Payment Not Available in Your Region',
-        description: `Paystack payments are currently only available in Nigeria, Ghana, South Africa, and Kenya. For other regions, please contact support@lensvault.com`,
-        duration: 10000
-      });
+    if (regionalPricing) {
+      const gateway = selectPaymentGateway(regionalPricing.currency.code);
+      setPaymentGateway(gateway);
+
+      if (gateway === 'flutterwave') {
+        console.log(`Using Flutterwave for ${regionalPricing.currency.code} payments`);
+      }
     }
-  }, [regionalPricing, toast]);
+  }, [regionalPricing]);
 
   const toggleFeatures = (planId: string) => {
     setExpandedFeatures(prev => ({ ...prev, [planId]: !prev[planId] }));
@@ -190,6 +193,78 @@ const Billing: React.FC<BillingProps> = ({ subscription, onPlanChange, email }) 
     console.log('Payment closed');
   };
 
+  const handleFlutterwaveSuccess = async (response: any, planId: string) => {
+    try {
+      setIsLoading(true);
+      const { apiService } = await import('../services/apiService');
+      const { supabase } = await import('../lib/supabase');
+
+      // Verify payment with backend
+      const result = await verifyFlutterwavePayment(
+        response.transaction_id,
+        planId,
+        isYearly ? 'yearly' : 'monthly'
+      );
+
+      if (result.success) {
+        // Calculate subscription end date
+        const now = new Date();
+        const endDate = new Date(now);
+        if (isYearly) {
+          endDate.setFullYear(endDate.getFullYear() + 1);
+        } else {
+          endDate.setMonth(endDate.getMonth() + 1);
+        }
+
+        // Update Supabase
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { error: updateError } = await supabase
+            .from('users')
+            .update({
+              subscription_plan: planId,
+              subscription_status: 'active',
+              subscription_ends_at: endDate.toISOString(),
+              last_payment_reference: response.transaction_id
+            })
+            .eq('id', user.id);
+
+          if (updateError) {
+            console.error('Failed to update subscription:', updateError);
+            toast({
+              title: 'Warning',
+              description: 'Payment successful but subscription update failed. Please contact support.',
+              variant: 'destructive'
+            });
+            return;
+          }
+        }
+
+        toast({
+          title: 'Payment Successful! 🎉',
+          description: `Your ${planId.charAt(0).toUpperCase() + planId.slice(1)} plan is now active!`,
+          variant: 'default',
+          duration: 5000
+        });
+
+        onPlanChange(planId as any);
+        setTimeout(() => window.location.reload(), 1500);
+      } else {
+        toast({ title: 'Verification Failed', description: result.message, variant: 'destructive' });
+      }
+    } catch (error) {
+      console.error(error);
+      toast({ title: 'Error', description: 'Payment verification failed', variant: 'destructive' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleFlutterwaveClose = () => {
+    setIsLoading(false);
+    console.log('Flutterwave payment closed');
+  };
+
   if (loadingPricing || !regionalPricing) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -198,10 +273,8 @@ const Billing: React.FC<BillingProps> = ({ subscription, onPlanChange, email }) 
     );
   }
 
-  // Get payment currency (Paystack supported or fallback to USD)
-  const paymentCurrency = PAYSTACK_CURRENCIES.includes(regionalPricing.currency.code)
-    ? regionalPricing.currency.code
-    : 'USD';
+  // Get payment currency
+  const paymentCurrency = regionalPricing.currency.code;
 
   // Define plans with dynamic pricing
   const plans = [
@@ -378,18 +451,33 @@ const Billing: React.FC<BillingProps> = ({ subscription, onPlanChange, email }) 
                         {isExpanded ? 'Show less' : `Show all ${plan.features.length} features`}
                       </Button>
                     )}
-                    <PaystackButtonWrapper
-                      email={email}
-                      amount={plan.amount}
-                      currency={paymentCurrency}
-                      planId={plan.id}
-                      disabled={isCurrent || isLoading}
-                      onSuccess={(ref: any) => handlePaystackSuccess(ref, plan.id)}
-                      onClose={handlePaystackClose}
-                      isCurrent={isCurrent}
-                      isLoading={isLoading}
-                      buttonText={isCurrent ? 'Current Plan' : `Switch to ${plan.name}`}
-                    />
+                    {paymentGateway === 'paystack' ? (
+                      <PaystackButtonWrapper
+                        email={email}
+                        amount={plan.amount}
+                        currency={paymentCurrency}
+                        planId={plan.id}
+                        disabled={isCurrent || isLoading}
+                        onSuccess={(ref: any) => handlePaystackSuccess(ref, plan.id)}
+                        onClose={handlePaystackClose}
+                        isCurrent={isCurrent}
+                        isLoading={isLoading}
+                        buttonText={isCurrent ? 'Current Plan' : `Switch to ${plan.name}`}
+                      />
+                    ) : (
+                      <FlutterwaveButton
+                        email={email}
+                        amount={plan.amount}
+                        currency={paymentCurrency}
+                        planId={plan.id}
+                        billingCycle={isYearly ? 'yearly' : 'monthly'}
+                        disabled={isCurrent || isLoading}
+                        onSuccess={(response: any) => handleFlutterwaveSuccess(response, plan.id)}
+                        onClose={handleFlutterwaveClose}
+                        isLoading={isLoading}
+                        buttonText={isCurrent ? 'Current Plan' : `Switch to ${plan.name}`}
+                      />
+                    )}
                   </div>
                 </Card>
               );
@@ -403,10 +491,14 @@ const Billing: React.FC<BillingProps> = ({ subscription, onPlanChange, email }) 
         <div className="mt-12 text-center text-sm text-muted-foreground space-y-2">
           <div className="flex items-center justify-center gap-2">
             <ShieldIcon className="h-4 w-4 text-green-500" />
-            <p>Secure checkout powered by Paystack.</p>
+            <p>Secure checkout powered by {paymentGateway === 'paystack' ? 'Paystack' : 'Flutterwave'}.</p>
           </div>
           <p>100% encrypted passwords. Zero-knowledge infrastructure.</p>
-          <p className="text-xs">Supported currencies: NGN, GHS, ZAR, KES, USD</p>
+          {paymentGateway === 'paystack' ? (
+            <p className="text-xs">African markets: NGN, GHS, ZAR, KES</p>
+          ) : (
+            <p className="text-xs">International payments: 150+ countries supported</p>
+          )}
         </div>
       )}
     </div>

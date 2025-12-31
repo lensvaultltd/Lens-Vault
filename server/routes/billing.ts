@@ -116,4 +116,77 @@ router.post('/verify', async (req, res) => {
     }
 });
 
+// Verify Flutterwave Payment (International)
+router.post('/verify-flutterwave', async (req, res) => {
+    const { transaction_id, plan_id, billing_cycle } = req.body;
+    const email = (req as any).user.email;
+
+    try {
+        console.log(`Verifying Flutterwave payment ${transaction_id} for ${email}...`);
+
+        const secretKey = process.env.FLUTTERWAVE_SECRET_KEY;
+        if (!secretKey) {
+            console.error('Flutterwave Secret Key not configured.');
+            return res.status(500).json({ success: false, message: 'Server Payment Configuration Error' });
+        }
+
+        // Verify transaction with Flutterwave
+        const response = await axios.get(
+            `https://api.flutterwave.com/v3/transactions/${transaction_id}/verify`,
+            {
+                headers: { Authorization: `Bearer ${secretKey}` }
+            }
+        );
+
+        const data = response.data.data;
+
+        if (response.data.status === 'success' && data.status === 'successful') {
+            // Calculate subscription end date
+            const now = new Date();
+            const endDate = new Date(now);
+            if (billing_cycle === 'yearly') {
+                endDate.setFullYear(now.getFullYear() + 1);
+            } else {
+                endDate.setMonth(now.getMonth() + 1);
+            }
+
+            // Update database
+            const { error } = await supabase
+                .from('users')
+                .update({
+                    subscription_plan: plan_id,
+                    subscription_status: 'active',
+                    subscription_end_date: endDate.toISOString(),
+                    last_payment_reference: transaction_id
+                })
+                .ilike('email', email);
+
+            if (error) {
+                console.error('DB Update Failed', error);
+                return res.json({
+                    success: false,
+                    message: 'Payment verified but DB update failed. Contact support.'
+                });
+            }
+
+            console.log(`Subscription updated for ${email} to ${plan_id} via Flutterwave`);
+            return res.json({
+                success: true,
+                message: 'Payment verified and subscription activated.'
+            });
+        } else {
+            return res.json({
+                success: false,
+                message: `Payment verification failed: ${data.status}`
+            });
+        }
+    } catch (error: any) {
+        console.error('Flutterwave Verification Error', error.response?.data || error.message);
+        return res.status(500).json({
+            success: false,
+            message: 'Payment verification failed.'
+        });
+    }
+});
+
 export default router;
