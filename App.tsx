@@ -132,6 +132,7 @@ import { apiService } from './services/apiService';
 import { EncryptionService } from './lib/encryption';
 
 import { AdminDashboardLayout } from './components/Admin/AdminDashboardLayout';
+import SplashScreen from './components/SplashScreen';
 
 
 const calculatePasswordStrength = (password: string): IPasswordStrength => {
@@ -181,6 +182,7 @@ function App() {
   const [user, setUser] = React.useState<IUser | null>(null);
   const [masterPassword, setMasterPassword] = React.useState<string | null>(null);
   const [privateKey, setPrivateKey] = React.useState<string | null>(null); // Decrypted private key (Base64)
+  const [isSplashScreenComplete, setIsSplashScreenComplete] = React.useState(false);
 
   const [entries, setEntries] = React.useState<IPasswordEntry[]>([]);
   const [folders, setFolders] = React.useState<Folder[]>([]);
@@ -642,6 +644,10 @@ function App() {
     }
     return entries;
   }, [entries, selectedFolder, viewingAs]);
+
+  if (!isSplashScreenComplete) {
+    return <SplashScreen onComplete={() => setIsSplashScreenComplete(true)} />;
+  }
 
   if (!user) {
     return <Auth onAuthenticated={(u, p, k) => handleAuthenticated(u, p, k)} />;
