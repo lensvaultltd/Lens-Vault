@@ -49,11 +49,11 @@ export const getPasswordAudit = async (passwords: IPasswordEntry[]): Promise<str
         const breachChecks = await Promise.all(
             loginEntries.map(async (entry) => {
                 if (entry.password) {
-                    const breached = await hibpService.checkPassword(entry.password);
+                    const count = await hibpService.checkPassword(entry.password);
                     return {
                         site: entry.siteName || entry.url,
-                        breached: breached.isBreached,
-                        count: breached.count
+                        breached: count > 0,
+                        count: count
                     };
                 }
                 return null;

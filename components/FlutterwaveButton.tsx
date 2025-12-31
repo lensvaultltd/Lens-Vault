@@ -38,7 +38,6 @@ const FlutterwaveButton: React.FC<FlutterwaveButtonProps> = ({
         } else {
             handleFlutterPayment({
                 callback: (response) => {
-                    console.log('Flutterwave response:', response);
                     closePaymentModal();
                     if (response.status === 'successful') {
                         onSuccess(response);
@@ -47,7 +46,6 @@ const FlutterwaveButton: React.FC<FlutterwaveButtonProps> = ({
                     }
                 },
                 onClose: () => {
-                    console.log('Flutterwave payment closed');
                     onClose();
                 },
             });

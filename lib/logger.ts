@@ -16,7 +16,7 @@ class Logger {
         switch (level) {
             case 'error':
                 console.error(prefix, message, ...args);
-                // TODO: Send to error tracking service (Sentry, LogRocket, etc.)
+                // [OBSERVABILITY] TODO: Integrate project with Sentry or LogRocket for production error tracking
                 break;
             case 'warn':
                 console.warn(prefix, message, ...args);

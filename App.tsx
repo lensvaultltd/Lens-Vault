@@ -534,7 +534,7 @@ function App() {
   const handleChangePassword = async () => {
     if (!user) return;
 
-    // TODO: Implement resetPasswordWithPasskey in apiService
+    // [SECURITY] TODO: Implement resetPasswordWithPasskey in apiService for enhanced recovery options
     // const result = await apiService.resetPasswordWithPasskey(user.email);
 
     toast({

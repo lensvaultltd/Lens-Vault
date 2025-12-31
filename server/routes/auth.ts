@@ -78,7 +78,7 @@ router.post('/signup', async (req, res) => {
 
 // Helper to determine if user is admin
 const isUserAdmin = (email: string) => {
-    // TODO: move to database column 'role' or 'is_admin' later.
+    // [SCALABILITY] TODO: Migrate to database-driven RBAC (role-based access control)
     const admins = ['LensVault@proton.me'];
     return admins.includes(email);
 };

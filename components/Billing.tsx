@@ -11,6 +11,7 @@ import { getUserPricing, calculateRegionalPricing } from '../services/pricingSer
 import type { RegionalPricing } from '../services/pricingService';
 import FlutterwaveButton from './FlutterwaveButton';
 import { selectPaymentGateway, verifyFlutterwavePayment } from '../services/flutterwaveService';
+import { logger } from '../lib/logger';
 
 interface BillingProps {
   subscription: Subscription;
@@ -110,7 +111,7 @@ const Billing: React.FC<BillingProps> = ({ subscription, onPlanChange, email }) 
       setPaymentGateway(gateway);
 
       if (gateway === 'flutterwave') {
-        console.log(`Using Flutterwave for ${regionalPricing.currency.code} payments`);
+        logger.debug(`Using Flutterwave for ${regionalPricing.currency.code} payments`);
       }
     }
   }, [regionalPricing]);
@@ -190,7 +191,7 @@ const Billing: React.FC<BillingProps> = ({ subscription, onPlanChange, email }) 
 
   const handlePaystackClose = () => {
     setIsLoading(false);
-    console.log('Payment closed');
+    logger.debug('Paystack payment closed');
   };
 
   const handleFlutterwaveSuccess = async (response: any, planId: string) => {
@@ -262,7 +263,7 @@ const Billing: React.FC<BillingProps> = ({ subscription, onPlanChange, email }) 
 
   const handleFlutterwaveClose = () => {
     setIsLoading(false);
-    console.log('Flutterwave payment closed');
+    logger.debug('Flutterwave payment closed');
   };
 
   if (loadingPricing || !regionalPricing) {

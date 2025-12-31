@@ -38,6 +38,7 @@ export const generateFlutterwaveConfig = (
         payment_options: 'card,mobilemoney,ussd,banktransfer',
         customer: {
             email: email,
+            phone_number: '', // Optional/empty but required by library type definition
             name: email.split('@')[0],
         },
         customizations: {
