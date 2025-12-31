@@ -7,11 +7,16 @@ export const PLAN_LIMITS = {
     free: {
         maxPasswords: 50,
         maxFolders: 5,
+        // Family Center (Digital Will & Emergency Access)
+        familyCenter: false,
+        maxFamilyMembers: 0,
+        // Passwordless Sharing
+        passwordlessSharing: false,
+        maxActiveShares: 0,
+        // Other features
         aiAuditor: false,
-        familySharing: false,
         emergencyAccess: false,
         darkWebMonitoring: false,
-        passwordSharing: false,
         exportData: true,
         importData: true,
         twoFactorAuth: false,
@@ -19,11 +24,16 @@ export const PLAN_LIMITS = {
     premium: {
         maxPasswords: 1000,
         maxFolders: 50,
+        // Family Center (Digital Will & Emergency Access)
+        familyCenter: false,
+        maxFamilyMembers: 0,
+        // Passwordless Sharing
+        passwordlessSharing: true,
+        maxActiveShares: 50,
+        // Other features
         aiAuditor: true,
-        familySharing: false,
         emergencyAccess: true,
         darkWebMonitoring: true,
-        passwordSharing: true,
         exportData: true,
         importData: true,
         twoFactorAuth: true,
@@ -31,12 +41,16 @@ export const PLAN_LIMITS = {
     family: {
         maxPasswords: 5000,
         maxFolders: 100,
-        maxFamilyMembers: 6,
+        // Family Center (Digital Will & Emergency Access)
+        familyCenter: true,
+        maxFamilyMembers: 6, // Including owner
+        // Passwordless Sharing
+        passwordlessSharing: true,
+        maxActiveShares: 100,
+        // Other features
         aiAuditor: true,
-        familySharing: true,
         emergencyAccess: true,
         darkWebMonitoring: true,
-        passwordSharing: true,
         exportData: true,
         importData: true,
         twoFactorAuth: true,
@@ -44,12 +58,17 @@ export const PLAN_LIMITS = {
     business: {
         maxPasswords: 10000,
         maxFolders: 200,
+        // Family Center (Digital Will & Emergency Access)
+        familyCenter: true,
+        maxFamilyMembers: 50, // Including owner
         maxTeamMembers: 50,
+        // Passwordless Sharing
+        passwordlessSharing: true,
+        maxActiveShares: 500,
+        // Other features
         aiAuditor: true,
-        familySharing: true,
         emergencyAccess: true,
         darkWebMonitoring: true,
-        passwordSharing: true,
         exportData: true,
         importData: true,
         twoFactorAuth: true,

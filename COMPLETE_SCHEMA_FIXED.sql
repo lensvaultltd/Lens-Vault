@@ -26,7 +26,11 @@ CREATE TABLE IF NOT EXISTS public.users (
   last_payment_reference TEXT,
   is_first_login BOOLEAN DEFAULT true,
   password_changes_count INTEGER DEFAULT 0,
-  last_password_change TIMESTAMPTZ
+  last_password_change TIMESTAMPTZ,
+  -- Plan change tracking
+  downgrade_date TIMESTAMPTZ,
+  previous_plan TEXT,
+  grace_period_end TIMESTAMPTZ
 );
 
 CREATE INDEX IF NOT EXISTS idx_users_email ON public.users(email);
@@ -165,6 +169,37 @@ CREATE TABLE IF NOT EXISTS public.shared_access_audit (
 
 CREATE INDEX IF NOT EXISTS idx_audit_shared_access ON public.shared_access_audit(shared_access_id);
 CREATE INDEX IF NOT EXISTS idx_audit_event_type ON public.shared_access_audit(event_type);
+
+-- Plan changes tracking table
+CREATE TABLE IF NOT EXISTS public.plan_changes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  from_plan TEXT NOT NULL,
+  to_plan TEXT NOT NULL,
+  change_type TEXT NOT NULL CHECK (change_type IN ('upgrade', 'downgrade', 'switch')),
+  changed_at TIMESTAMPTZ DEFAULT NOW(),
+  grace_period_end TIMESTAMPTZ,
+  data_archived BOOLEAN DEFAULT FALSE,
+  restored BOOLEAN DEFAULT FALSE
+);
+
+CREATE INDEX IF NOT EXISTS idx_plan_changes_user ON public.plan_changes(user_id);
+CREATE INDEX IF NOT EXISTS idx_plan_changes_type ON public.plan_changes(change_type);
+
+-- Archived data table for downgrades
+CREATE TABLE IF NOT EXISTS public.archived_data (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  data_type TEXT NOT NULL CHECK (data_type IN ('family_members', 'shares', 'settings')),
+  data JSONB NOT NULL,
+  archived_at TIMESTAMPTZ DEFAULT NOW(),
+  expires_at TIMESTAMPTZ,
+  restored BOOLEAN DEFAULT FALSE
+);
+
+CREATE INDEX IF NOT EXISTS idx_archived_data_user ON public.archived_data(user_id);
+CREATE INDEX IF NOT EXISTS idx_archived_data_type ON public.archived_data(data_type);
+CREATE INDEX IF NOT EXISTS idx_archived_data_expires ON public.archived_data(expires_at) WHERE expires_at IS NOT NULL;
 
 -- ============================================
 -- PART 4: ROW LEVEL SECURITY (RLS)
