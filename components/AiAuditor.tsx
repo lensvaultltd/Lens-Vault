@@ -23,7 +23,8 @@ const AiAuditor: React.FC<AiAuditorProps> = ({ entries }) => {
   const vaultEmails = useMemo(() => {
     const emails = new Set<string>();
     entries.forEach(entry => {
-      if (entry.type === 'login' && entry.username && entry.username.includes('@')) {
+      // Check for login type OR if it has username field (more lenient)
+      if ((entry.type === 'login' || entry.username) && entry.username && entry.username.includes('@')) {
         emails.add(entry.username);
       }
       if (entry.type === 'identity' && entry.email) {
@@ -73,7 +74,7 @@ const AiAuditor: React.FC<AiAuditorProps> = ({ entries }) => {
         description: "An error occurred while running the password audit. Please try again.",
         variant: "destructive",
       });
-       setPasswordAuditResult("<h3>Error</h3><p>An error occurred while running the password audit.</p>");
+      setPasswordAuditResult("<h3>Error</h3><p>An error occurred while running the password audit.</p>");
     } finally {
       setIsPasswordLoading(false);
     }
@@ -91,9 +92,9 @@ const AiAuditor: React.FC<AiAuditorProps> = ({ entries }) => {
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Dark Web Breach Scan</h3>
           <div className="flex flex-col sm:flex-row items-center gap-4">
-            <Input 
-              type="email" 
-              placeholder="Enter email to audit" 
+            <Input
+              type="email"
+              placeholder="Enter email to audit"
               value={emailToAudit}
               onChange={(e) => setEmailToAudit(e.target.value)}
               className="flex-1"
@@ -121,13 +122,13 @@ const AiAuditor: React.FC<AiAuditorProps> = ({ entries }) => {
               <p className="mt-4 text-muted-foreground">AI is scanning for breaches... This may take a moment.</p>
             </div>
           )}
-          
+
           {emailAuditResult && (
             <Card className="bg-muted">
               <CardContent className="p-6">
-                <div 
-                  className="prose max-w-none text-sm text-foreground" 
-                  dangerouslySetInnerHTML={{ __html: emailAuditResult.report }} 
+                <div
+                  className="prose max-w-none text-sm text-foreground"
+                  dangerouslySetInnerHTML={{ __html: emailAuditResult.report }}
                 />
                 {emailAuditResult.sources && emailAuditResult.sources.length > 0 && (
                   <div className="mt-6">
@@ -147,37 +148,37 @@ const AiAuditor: React.FC<AiAuditorProps> = ({ entries }) => {
             </Card>
           )}
         </div>
-        
+
         <div className="border-t -mx-6" />
 
         <div className="space-y-4">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h3 className="text-lg font-semibold">Password Checkup</h3>
-                    <p className="text-sm text-muted-foreground">Analyze the strength and security of your saved passwords.</p>
-                </div>
-                <Button onClick={handlePasswordAudit} disabled={isPasswordLoading} className="bg-gradient-accent">
-                    {isPasswordLoading ? 'Checking...' : 'Check Passwords'}
-                </Button>
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold">Password Checkup</h3>
+              <p className="text-sm text-muted-foreground">Analyze the strength and security of your saved passwords.</p>
             </div>
+            <Button onClick={handlePasswordAudit} disabled={isPasswordLoading} className="bg-gradient-accent">
+              {isPasswordLoading ? 'Checking...' : 'Check Passwords'}
+            </Button>
+          </div>
 
-            {isPasswordLoading && (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-                <p className="mt-4 text-muted-foreground">AI is analyzing your password security...</p>
-              </div>
-            )}
+          {isPasswordLoading && (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-4 text-muted-foreground">AI is analyzing your password security...</p>
+            </div>
+          )}
 
-            {passwordAuditResult && (
-              <Card className="bg-muted">
-                <CardContent className="p-6">
-                  <div 
-                    className="prose max-w-none text-sm text-foreground" 
-                    dangerouslySetInnerHTML={{ __html: passwordAuditResult }} 
-                  />
-                </CardContent>
-              </Card>
-            )}
+          {passwordAuditResult && (
+            <Card className="bg-muted">
+              <CardContent className="p-6">
+                <div
+                  className="prose max-w-none text-sm text-foreground"
+                  dangerouslySetInnerHTML={{ __html: passwordAuditResult }}
+                />
+              </CardContent>
+            </Card>
+          )}
         </div>
 
       </CardContent>

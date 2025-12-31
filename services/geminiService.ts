@@ -16,7 +16,10 @@ const getAiClient = () => {
 
 export const getPasswordAudit = async (passwords: IPasswordEntry[]): Promise<string> => {
   try {
-    const loginEntries = passwords.filter(p => p.type === 'login' && p.password);
+    // Filter for login entries - check type OR presence of username/password fields
+    const loginEntries = passwords.filter(p =>
+      (p.type === 'login' || (p.username && p.password)) && p.password
+    );
 
     if (loginEntries.length === 0) {
       return "<h2>No Login Passwords Found</h2><p>You don't have any login entries in your vault to audit.</p>";
