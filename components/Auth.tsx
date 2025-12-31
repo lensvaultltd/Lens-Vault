@@ -308,12 +308,12 @@ const Auth: React.FC<AuthProps> = ({ onAuthenticated }) => {
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <img src="/favicon.svg" alt="Lens Vault logo" className="mx-auto mb-4 h-20 w-auto" />
+          <img src="/logo-transparent.png" alt="Lens Vault logo" className="mx-auto mb-4 h-20 w-auto" />
           <CardTitle className="text-2xl">
             {isForgotPasswordView ? 'Reset Password' : (isLoginView ? 'Welcome Back' : 'Create Account')}
           </CardTitle>
           <CardDescription>
-            {isForgotPasswordView ? 'Reset your master password using a passkey.' : (isLoginView ? 'Enter your credentials to unlock your vault' : 'Create an account to start securing your digital life')}
+            {isForgotPasswordView ? 'Reset your master password via email link. Note: You will lose access to your current vault data.' : (isLoginView ? 'Enter your credentials to unlock your vault' : 'Create an account to start securing your digital life')}
           </CardDescription>
         </CardHeader>
         <CardContent>
