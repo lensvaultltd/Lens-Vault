@@ -1,8 +1,9 @@
-const { app, BrowserWindow, Menu } = require('electron');
+const { app, BrowserWindow, Menu, Tray, nativeImage } = require('electron');
 const path = require('path');
 const isDev = process.env.NODE_ENV === 'development';
 
 let mainWindow;
+let tray;
 
 function createWindow() {
     mainWindow = new BrowserWindow({
@@ -92,12 +93,57 @@ function createWindow() {
     Menu.setApplicationMenu(menu);
 }
 
+function createTray() {
+    const iconPath = path.join(__dirname, 'build', 'icon.png');
+    const icon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 });
+    tray = new Tray(icon);
+
+    const contextMenu = Menu.buildFromTemplate([
+        {
+            label: 'Show Lens Vault', click: () => {
+                if (mainWindow) {
+                    mainWindow.show();
+                    mainWindow.focus();
+                } else {
+                    createWindow();
+                }
+            }
+        },
+        { type: 'separator' },
+        {
+            label: 'Lock Vault', click: () => {
+                if (mainWindow) mainWindow.webContents.send('lock-vault');
+            }
+        },
+        { type: 'separator' },
+        {
+            label: 'Quit', click: () => {
+                app.isQuitting = true;
+                app.quit();
+            }
+        }
+    ]);
+
+    tray.setToolTip('Lens Vault');
+    tray.setContextMenu(contextMenu);
+
+    tray.on('click', () => {
+        if (mainWindow) {
+            mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show();
+        }
+    });
+}
+
 // App lifecycle
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+    createWindow();
+    createTray();
+});
 
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
-        app.quit();
+        // Keep running in tray unless explicit quit
+        // app.quit(); 
     }
 });
 

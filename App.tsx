@@ -247,6 +247,13 @@ function App() {
       loadData();
       loadSharedItems();
 
+      // Electron IPC listener for locking from tray
+      if (window.hasOwnProperty('electron')) {
+        (window as any).electron.receive('lock-vault', () => {
+          handleLogout();
+        });
+      }
+
       // Realtime Subscription for Shared Items
       import('./lib/supabase').then(({ supabase }) => {
         const channel = supabase.channel('shared_items_user')
@@ -684,8 +691,8 @@ function App() {
 
 
   return (
-    <div className="min-h-screen">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen transition-all duration-700">
+      <div className="container mx-auto px-4 py-8 max-w-7xl lg:px-8">
         {subscription.status === 'trialing' && <TrialBanner trialEndsAt={subscription.trialEndsAt} onUpgradeClick={() => setActiveTab('settings')} />}
         {viewingAs && (
           <div className="mb-4 p-3 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-between">

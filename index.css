@@ -153,5 +153,38 @@
   animation: progress 2s ease-in-out infinite;
 }
 
+/* Glassmorphism 2.0 - Premium Refinement */
+.backdrop-blur-md {
+  backdrop-filter: blur(12px) saturate(180%);
+  background-color: rgba(var(--background), 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* Living Background Pulse */
+@keyframes living-bg {
+  0%, 100% { background-position: 0% 50%; opacity: 0.8; }
+  50% { background-position: 100% 50%; opacity: 1; }
+}
+
+body {
+  background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.05), transparent 40%),
+              radial-gradient(circle at bottom left, rgba(168, 85, 247, 0.05), transparent 40%),
+              var(--background);
+  background-attachment: fixed;
+  position: relative;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(-45deg, rgba(var(--primary), 0.02), rgba(var(--accent), 0.02));
+  background-size: 400% 400%;
+  animation: living-bg 15s ease infinite;
+  z-index: -1;
+  pointer-events: none;
+}
+
 .delay-75 { animation-delay: 75ms; }
 .delay-150 { animation-delay: 150ms; }
