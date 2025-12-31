@@ -55,7 +55,8 @@ CREATE TABLE IF NOT EXISTS public.vaults (
   salt TEXT,
   iv TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id)  -- Add unique constraint for upsert
 );
 
 CREATE INDEX IF NOT EXISTS idx_vaults_user_id ON public.vaults(user_id);
