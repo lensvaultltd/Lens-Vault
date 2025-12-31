@@ -145,10 +145,12 @@ ALTER TABLE public.shared_access_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.shared_access_audit ENABLE ROW LEVEL SECURITY;
 
 -- Shared Access Policies
+DROP POLICY IF EXISTS "Owners can manage their shared access" ON public.shared_access;
 CREATE POLICY "Owners can manage their shared access"
   ON public.shared_access FOR ALL
   USING (owner_id = auth.uid());
 
+DROP POLICY IF EXISTS "Recipients can view their shared access" ON public.shared_access;
 CREATE POLICY "Recipients can view their shared access"
   ON public.shared_access FOR SELECT
   USING (
@@ -156,6 +158,7 @@ CREATE POLICY "Recipients can view their shared access"
     OR recipient_id = auth.uid()
   );
 
+DROP POLICY IF EXISTS "Recipients can update their shared access status" ON public.shared_access;
 CREATE POLICY "Recipients can update their shared access status"
   ON public.shared_access FOR UPDATE
   USING (
@@ -168,18 +171,22 @@ CREATE POLICY "Recipients can update their shared access status"
   );
 
 -- Session Policies
+DROP POLICY IF EXISTS "Users can view their own sessions" ON public.shared_access_sessions;
 CREATE POLICY "Users can view their own sessions"
   ON public.shared_access_sessions FOR SELECT
   USING (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "Users can insert their own sessions" ON public.shared_access_sessions;
 CREATE POLICY "Users can insert their own sessions"
   ON public.shared_access_sessions FOR INSERT
   WITH CHECK (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "Users can update their own sessions" ON public.shared_access_sessions;
 CREATE POLICY "Users can update their own sessions"
   ON public.shared_access_sessions FOR UPDATE
   USING (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "Owners can view sessions for their shared access" ON public.shared_access_sessions;
 CREATE POLICY "Owners can view sessions for their shared access"
   ON public.shared_access_sessions FOR SELECT
   USING (
@@ -189,6 +196,7 @@ CREATE POLICY "Owners can view sessions for their shared access"
   );
 
 -- Audit Policies
+DROP POLICY IF EXISTS "Users can view audit logs for their shared access" ON public.shared_access_audit;
 CREATE POLICY "Users can view audit logs for their shared access"
   ON public.shared_access_audit FOR SELECT
   USING (
@@ -200,6 +208,7 @@ CREATE POLICY "Users can view audit logs for their shared access"
     )
   );
 
+DROP POLICY IF EXISTS "System can insert audit logs" ON public.shared_access_audit;
 CREATE POLICY "System can insert audit logs"
   ON public.shared_access_audit FOR INSERT
   WITH CHECK (true);
