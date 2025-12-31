@@ -31,7 +31,8 @@ const ExpiryWarning: React.FC<ExpiryWarningProps> = ({ subscription, onUpgradeCl
         };
 
         calculateDaysRemaining();
-        const interval = setInterval(calculateDaysRemaining, 1000 * 60 * 60); // Update every hour
+        // Update every second for real-time countdown
+        const interval = setInterval(calculateDaysRemaining, 1000);
 
         return () => clearInterval(interval);
     }, [subscription]);

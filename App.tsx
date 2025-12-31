@@ -739,23 +739,23 @@ function App() {
           )}
         </div>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className={`grid w-full ${viewingAs ? 'grid-cols-1' : 'grid-cols-5'}`}>
-            <TabsTrigger value="vault" className="gap-2">
+          <TabsList className={`${viewingAs ? 'w-full' : 'w-full md:grid md:grid-cols-5'} inline-flex md:inline-grid overflow-x-auto scrollbar-hide`}>
+            <TabsTrigger value="vault" className="gap-2 whitespace-nowrap flex-shrink-0">
               <Shield className="h-4 w-4" /> {viewingAs ? `Shared Items (${displayedEntries.length})` : 'My Vault'}
             </TabsTrigger>
             {!viewingAs && (
               <>
-                <TabsTrigger value="auditor" className="gap-2">
+                <TabsTrigger value="auditor" className="gap-2 whitespace-nowrap flex-shrink-0">
                   <ShieldAlert className="h-4 w-4" />AI Auditor
                 </TabsTrigger>
-                <TabsTrigger value="generator" className="gap-2">
+                <TabsTrigger value="generator" className="gap-2 whitespace-nowrap flex-shrink-0">
                   <Key className="h-4 w-4" />Generator
                 </TabsTrigger>
                 {!isPremium ? (
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <TabsTrigger value="authorized" className="gap-2" disabled>
+                        <TabsTrigger value="authorized" className="gap-2 whitespace-nowrap flex-shrink-0" disabled>
                           <Users className="h-4 w-4" />Family & Sharing
                         </TabsTrigger>
                       </TooltipTrigger>
@@ -765,11 +765,11 @@ function App() {
                     </Tooltip>
                   </TooltipProvider>
                 ) : (
-                  <TabsTrigger value="authorized" className="gap-2">
+                  <TabsTrigger value="authorized" className="gap-2 whitespace-nowrap flex-shrink-0">
                     <Users className="h-4 w-4" />Family & Sharing
                   </TabsTrigger>
                 )}
-                <TabsTrigger value="settings" className="gap-2">
+                <TabsTrigger value="settings" className="gap-2 whitespace-nowrap flex-shrink-0">
                   <Settings className="h-4 w-4" />Settings
                 </TabsTrigger>
               </>
