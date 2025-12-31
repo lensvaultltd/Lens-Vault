@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { IPasswordEntry } from '../types';
 import { hibpService } from './hibpService';
-import { supabase } from '../lib/supabaseClient';
 
 // NVIDIA NIM API Client - Using Supabase Edge Function to avoid CORS
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
