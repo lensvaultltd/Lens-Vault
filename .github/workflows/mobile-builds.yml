@@ -15,9 +15,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: package-lock.json
+          node-version: '22'
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -25,8 +23,16 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Clear npm cache
+        run: npm cache clean --force
+
       - name: Install Dependencies
-        run: npm install
+        run: npm ci
+
+      - name: Reinstall Capacitor CLI
+        run: |
+          npm uninstall @capacitor/cli @capacitor/core @capacitor/android
+          npm install @capacitor/cli@latest @capacitor/core@latest @capacitor/android@latest
 
       - name: Build Web Project
         run: npm run build
@@ -54,12 +60,18 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: package-lock.json
+          node-version: '22'
+
+      - name: Clear npm cache
+        run: npm cache clean --force
 
       - name: Install Dependencies
-        run: npm install
+        run: npm ci
+
+      - name: Reinstall Capacitor CLI
+        run: |
+          npm uninstall @capacitor/cli @capacitor/core @capacitor/ios
+          npm install @capacitor/cli@latest @capacitor/core@latest @capacitor/ios@latest
 
       - name: Build Web Project
         run: npm run build
@@ -90,9 +102,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: package-lock.json
+          node-version: '22'
+
+      - name: Check Node Version
+        run: |
+          node -v
+          npm -v
 
       - name: Install Dependencies
         run: npm install
