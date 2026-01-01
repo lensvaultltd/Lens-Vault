@@ -17,8 +17,8 @@ interface VaultViewProps {
 }
 
 const VaultView: React.FC<VaultViewProps> = ({
-    entries,
-    sharedItems,
+    entries = [],
+    sharedItems = [],
     selectedFolder,
     viewingAs,
     onEdit,
@@ -36,7 +36,7 @@ const VaultView: React.FC<VaultViewProps> = ({
     return (
         <div className="space-y-8 animate-in fade-in duration-700 slide-in-from-bottom-4">
             {/* Pending Shares Section - Floating Glass Alert */}
-            {sharedItems.length > 0 && (
+            {sharedItems && sharedItems.length > 0 && (
                 <div className="zaha-card p-6 border-l-4 border-l-blue-500 relative overflow-hidden group">
                     <div className="absolute inset-0 bg-blue-500/5 group-hover:bg-blue-500/10 transition-colors"></div>
                     <div className="relative z-10">
@@ -73,7 +73,7 @@ const VaultView: React.FC<VaultViewProps> = ({
                     {viewingAs ? `Shared by ${viewingAs.name}` : getFolderName(selectedFolder)}
                 </h2>
                 <span className="text-muted-foreground font-light tracking-widest uppercase text-sm">
-                    {entries.length} Secure Objects
+                    {entries?.length || 0} Secure Objects
                 </span>
             </div>
 
