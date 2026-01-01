@@ -62,6 +62,29 @@ function App() {
   const loadData = async () => { }; // Simplification
   // In real file, I will keep the existing logic blocks.
 
+  // Extension Prompt Logic
+  const [showExtensionPrompt, setShowExtensionPrompt] = React.useState(false);
+
+  React.useEffect(() => {
+    // Check if extension is "installed" (Flag injected by content script)
+    // OR check if user has already dismissed the prompt
+    // For now, simpler check: if not dismissed, show it.
+    const hasDismissed = localStorage.getItem('lens-vault-extension-prompt-dismissed');
+    // @ts-ignore
+    const isExtensionActive = window.lensVaultExtensionActive === true;
+
+    if (!hasDismissed && !isExtensionActive) {
+      // Delay slightly to let the UI settle
+      const timer = setTimeout(() => setShowExtensionPrompt(true), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  const dismissExtensionPrompt = () => {
+    setShowExtensionPrompt(false);
+    localStorage.setItem('lens-vault-extension-prompt-dismissed', 'true');
+  };
+
   if (!isSplashScreenComplete) {
     return <SplashScreen onComplete={() => setIsSplashScreenComplete(true)} />;
   }
@@ -148,6 +171,34 @@ function App() {
           {/* Other tabs... */}
         </Suspense>
       </main>
+
+      {/* Extension Installation Prompt - Glass Sheet */}
+      <Sheet open={showExtensionPrompt} onOpenChange={setShowExtensionPrompt}>
+        <SheetContent side="bottom" className="backdrop-blur-xl bg-black/60 border-t-white/10 p-0 sm:max-w-none">
+          <div className="container mx-auto px-6 py-8 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-6">
+              <div className="p-4 bg-primary/20 rounded-2xl border border-primary/30 shadow-[0_0_30px_rgba(139,92,246,0.2)]">
+                <Shield className="w-8 h-8 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white mb-1">Install the Lens Vault Extension</h3>
+                <p className="text-muted-foreground">Detect logins, audit passwords, and autofill credentials securely.</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4 w-full md:w-auto">
+              <Button variant="ghost" className="flex-1 md:flex-none" onClick={dismissExtensionPrompt}>
+                I'll do it later
+              </Button>
+              <Button className="flex-1 md:flex-none bg-primary hover:bg-primary/90 text-white font-bold px-8 shadow-lg shadow-primary/25" onClick={() => {
+                window.open('https://lens-vault-website.vercel.app/download', '_blank');
+                dismissExtensionPrompt();
+              }}>
+                Install Now <Plus className="ml-2 w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <Toaster />
     </div>
