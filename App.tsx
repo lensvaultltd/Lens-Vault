@@ -1,12 +1,12 @@
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
-// Lazy-loaded view components
-const VaultView = React.lazy(() => import('./components/VaultView'));
-const SettingsView = React.lazy(() => import('./components/SettingsView'));
-const SharingView = React.lazy(() => import('./components/SharingView'));
-const AiAuditor = React.lazy(() => import('./components/AiAuditor'));
-const PasswordGenerator = React.lazy(() => import('./components/PasswordGenerator'));
+// Core Views (Static Imports for Stability)
+import VaultView from './components/VaultView';
+import SettingsView from './components/SettingsView';
+import SharingView from './components/SharingView';
+import AiAuditor from './components/AiAuditor';
+import { PasswordGenerator } from './components/PasswordGenerator'; // Named export likely
 
 // Core UI Components
 import { Button } from './components/ui/button';
@@ -257,50 +257,50 @@ function App() {
 
       {/* Main Fluid Content Area */}
       <main className="relative z-10 px-4 md:px-8 pb-10">
-        <Suspense fallback={<div className="flex justify-center mt-20"><div className="w-10 h-10 border-t-2 border-primary rounded-full animate-spin"></div></div>}>
 
-          {activeTab === 'vault' && (
-            <VaultView
-              entries={entries}
-              folders={folders}
-              selectedFolder={selectedFolder}
-              sharedItems={[]} // Todo: Add shared items fetch
-              viewingAs={viewingAs}
-              onEdit={handleOpenEdit}
-              onDelete={handleDeleteEntry}
-              onShare={handleOpenShare}
-              onAcceptShare={() => { }} // Placeholder
-              onRejectShare={() => { }} // Placeholder
-            />
-          )}
 
-          {activeTab === 'auditor' && (
-            <AiAuditor
-              passwords={entries}
-              onFixIssue={(entry) => {
-                handleOpenEdit(entry);
-                setActiveTab('vault');
-              }}
-            />
-          )}
+        {activeTab === 'vault' && (
+          <VaultView
+            entries={entries}
+            folders={folders}
+            selectedFolder={selectedFolder}
+            sharedItems={[]} // Todo: Add shared items fetch
+            viewingAs={viewingAs}
+            onEdit={handleOpenEdit}
+            onDelete={handleDeleteEntry}
+            onShare={handleOpenShare}
+            onAcceptShare={() => { }} // Placeholder
+            onRejectShare={() => { }} // Placeholder
+          />
+        )}
 
-          {activeTab === 'generator' && (
-            <div className="max-w-4xl mx-auto pt-10">
-              <PasswordGenerator />
-            </div>
-          )}
+        {activeTab === 'auditor' && (
+          <AiAuditor
+            entries={entries}
+            onFixIssue={(entry) => {
+              handleOpenEdit(entry);
+              setActiveTab('vault');
+            }}
+          />
+        )}
 
-          {activeTab === 'settings' && (
-            <SettingsView
-              user={user}
-              onLogout={handleLogout}
-              onOpenImportExport={() => setIsImportExportOpen(true)}
-              onOpenEmergency={() => setIsEmergencyAccessOpen(true)}
-              subscription={{ plan: 'free', status: 'active', trialEndsAt: null }} // Mock or fetch
-            />
-          )}
+        {activeTab === 'generator' && (
+          <div className="max-w-4xl mx-auto pt-10">
+            <PasswordGenerator />
+          </div>
+        )}
 
-        </Suspense>
+        {activeTab === 'settings' && (
+          <SettingsView
+            user={user}
+            onLogout={handleLogout}
+            onOpenImportExport={() => setIsImportExportOpen(true)}
+            onOpenEmergency={() => setIsEmergencyAccessOpen(true)}
+            subscription={{ plan: 'free', status: 'active', trialEndsAt: null }} // Mock or fetch
+          />
+        )}
+
+
       </main>
 
       {/* Dialogs */}
