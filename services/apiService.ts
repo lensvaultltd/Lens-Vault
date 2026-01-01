@@ -277,4 +277,31 @@ export const apiService = {
       body: JSON.stringify({ reference, planId, cycle }),
     });
   },
+
+  async submitFeedback(message: string, includeEmail: boolean, userEmail?: string): Promise<{ success: boolean; message: string }> {
+    try {
+      // Direct insertion to Supabase 'feedback' table
+      const feedbackData: any = {
+        message,
+        created_at: new Date().toISOString(),
+      };
+
+      if (includeEmail && userEmail) {
+        feedbackData.email = userEmail;
+      }
+
+      const { error } = await supabase.from('feedback').insert(feedbackData);
+
+      if (error) {
+        // If table doesn't exist or RLS blocks it, we might want to log it specifically
+        console.error("Feedback insert error:", error);
+        throw new Error("Could not submit feedback.");
+      }
+
+      return { success: true, message: "Feedback sent successfully!" };
+    } catch (error: any) {
+      console.error("Feedback error:", error);
+      return { success: false, message: "Failed to send feedback." };
+    }
+  }
 };

@@ -2,6 +2,15 @@ import React from 'react';
 import { Input } from './ui/input';
 import { useToast } from './ui/use-toast';
 import { RedemptionService } from '../services/redemptionService';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+    DialogFooter,
+} from "./ui/dialog";
 
 // ... (previous imports)
 
@@ -178,6 +187,102 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                     </div>
                 </CardContent>
             </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Feedback</CardTitle>
+                    <CardDescription>Help us improve Lens Vault.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button
+                                className="w-full sm:w-auto backdrop-blur-md bg-white/10 hover:bg-white/20 border border-white/20 text-white shadow-lg transition-all duration-300 group"
+                                style={{
+                                    background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)'
+                                }}
+                            >
+                                <span className="mr-2 group-hover:scale-110 transition-transform">✨</span>
+                                Send Feedback
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[425px]">
+                            <DialogHeader>
+                                <DialogTitle>Send Feedback</DialogTitle>
+                                <DialogDescription>
+                                    Tell us what you love or what we can do better. Your privacy is respected.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <FeedbackForm userEmail={user.email} />
+                        </DialogContent>
+                    </Dialog>
+                </CardContent>
+            </Card>
+        </div>
+    );
+};
+
+const FeedbackForm = ({ userEmail }: { userEmail: string }) => {
+    const { toast } = useToast();
+    const [message, setMessage] = React.useState('');
+    const [includeEmail, setIncludeEmail] = React.useState(false);
+    const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+    const handleSubmit = async () => {
+        if (!message.trim()) {
+            toast({ title: "Please enter a message.", variant: "destructive" });
+            return;
+        }
+
+        setIsSubmitting(true);
+        // Dynamically import apiService to avoid circular dependency issues if any, though here it's fine.
+        // Assuming apiService is imported at top or available. 
+        // We need to import it if not present. It is imported in the file.
+        const { apiService } = await import('../services/apiService');
+
+        const result = await apiService.submitFeedback(message, includeEmail, userEmail);
+        setIsSubmitting(false);
+
+        if (result.success) {
+            toast({ title: "Feedback Sent!", description: "Thank you for helping us improve." });
+            setMessage('');
+            setIncludeEmail(false);
+        } else {
+            toast({ title: "Error", description: "Could not send feedback. Please try again.", variant: "destructive" });
+        }
+    };
+
+    return (
+        <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+                <Input
+                    id="feedback-message"
+                    placeholder="Type your feedback here..."
+                    className="h-24 pb-16" // Simulating textarea height with input if needed, or better use Textarea
+                    as="textarea"
+                    value={message}
+                    onChange={(e: any) => setMessage(e.target.value)}
+                />
+            </div>
+            <div className="flex items-center space-x-2">
+                <input
+                    type="checkbox"
+                    id="include-email"
+                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                    checked={includeEmail}
+                    onChange={(e) => setIncludeEmail(e.target.checked)}
+                />
+                <label
+                    htmlFor="include-email"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                    Include my email for follow-up
+                </label>
+            </div>
+            <DialogFooter>
+                <Button onClick={handleSubmit} disabled={isSubmitting} className="bg-gradient-accent">
+                    {isSubmitting ? 'Sending...' : 'Send Feedback'}
+                </Button>
+            </DialogFooter>
         </div>
     );
 };
