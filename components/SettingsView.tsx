@@ -1,20 +1,8 @@
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Button } from './ui/button';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
-import { FileDown, FileUp, Key, Trash2, ShieldAlert } from 'lucide-react';
-import Billing from './Billing';
-import { Subscription, User } from '../types';
+import { Input } from './ui/input';
+import { useToast } from './ui/use-toast';
+import { RedemptionService } from '../services/redemptionService';
 
-interface SettingsViewProps {
-    user: User;
-    subscription: Subscription;
-    onPlanChange: (plan: 'free' | 'premium' | 'family' | 'business') => void;
-    onImportExportOpen: () => void;
-    onChangePassword: () => void;
-    onClearData: () => void;
-    onDeleteAccount: () => void;
-}
+// ... (previous imports)
 
 const SettingsView: React.FC<SettingsViewProps> = ({
     user,
@@ -25,12 +13,70 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     onClearData,
     onDeleteAccount,
 }) => {
+    const { toast } = useToast();
     const [isClearDataAlertOpen, setIsClearDataAlertOpen] = React.useState(false);
     const [isChangePasswordAlertOpen, setIsChangePasswordAlertOpen] = React.useState(false);
+
+    // Redemption State
+    const [redeemCode, setRedeemCode] = React.useState('');
+    const [isRedeeming, setIsRedeeming] = React.useState(false);
+
+    const handleRedeem = async () => {
+        if (!redeemCode) return;
+        setIsRedeeming(true);
+        const result = await RedemptionService.redeemCode(redeemCode, user.id);
+        setIsRedeeming(false);
+
+        if (result.success) {
+            toast({
+                title: "🎉 Code Redeemed!",
+                description: "You've successfully unlocked 2 months of Premium access.",
+                className: "bg-green-500 border-none text-white"
+            });
+            setRedeemCode('');
+            // Typically we'd reload the subscription here, forcing a refresh might be needed or user can refresh page
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            toast({
+                title: "Redemption Failed",
+                description: result.error || "Invalid or expired code.",
+                variant: "destructive"
+            });
+        }
+    };
 
     return (
         <div className="space-y-8">
             <Billing subscription={subscription} onPlanChange={onPlanChange} email={user.email} />
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Promotions</CardTitle>
+                    <CardDescription>Redeem special codes for premium access</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex gap-4 items-end max-w-sm">
+                        <div className="grid w-full items-center gap-1.5">
+                            <label htmlFor="promo-code" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                Enter Code
+                            </label>
+                            <Input
+                                id="promo-code"
+                                placeholder="e.g. LAUNCH20"
+                                value={redeemCode}
+                                onChange={(e) => setRedeemCode(e.target.value)}
+                            />
+                        </div>
+                        <Button onClick={handleRedeem} disabled={!redeemCode || isRedeeming} className="bg-gradient-accent">
+                            {isRedeeming ? 'Validating...' : 'Redeem'}
+                        </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                        Only one active promotion can be applied per account.
+                    </p>
+                </CardContent>
+            </Card>
+
             <Card>
                 <CardHeader>
                     <CardTitle>Data Management</CardTitle>
