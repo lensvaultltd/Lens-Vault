@@ -205,43 +205,67 @@ function showSavePrompt(credentials) {
     const overlay = document.createElement('div');
     overlay.id = 'lens-vault-save-prompt';
     overlay.innerHTML = `
-    <div style="position: fixed; top: 20px; right: 20px; z-index: 2147483647; 
-                background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-                border: 1px solid rgba(14, 165, 233, 0.3);
-                border-radius: 16px; padding: 20px; width: 360px;
-                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5); backdrop-filter: blur(20px);
-                animation: slideIn 0.3s ease-out;">
-      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-        <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-                    border-radius: 10px; display: flex; align-items: center; justify-content: center;
-                    font-size: 20px;">🔒</div>
-        <div style="flex: 1; color: #f1f5f9; font-weight: 600; font-size: 15px; font-family: -apple-system, sans-serif;">
-          Save password for ${window.location.hostname}?
+    const overlay = document.createElement('div');
+    overlay.id = 'lens-vault-save-prompt';
+    // Glassmorphism Style Matching App.tsx
+    // bg-background/80 -> rgba(11, 20, 39, 0.85) (assuming roughly dark background)
+    // border-primary/20 -> rgba(14, 165, 233, 0.2)
+    overlay.innerHTML = `
+        < div style = "position: fixed; bottom: 24px; right: 24px; z-index: 2147483647; 
+    background: rgba(11, 20, 39, 0.9);
+    backdrop - filter: blur(12px);
+    border: 1px solid rgba(14, 165, 233, 0.2);
+    border - radius: 16px; padding: 16px; width: 320px;
+    box - shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    font - family: -apple - system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans - serif;
+    animation: slideIn 0.5s cubic - bezier(0.19, 1, 0.22, 1);
+    color: #f8fafc; ">
+
+        < div style = "display: flex; align-items: flex-start; gap: 16px; margin-bottom: 16px;" >
+        <div style="padding: 8px; background: rgba(14, 165, 233, 0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: block;">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
         </div>
+        <div style="flex: 1;">
+          <h4 style="margin: 0 0 2px 0; font-weight: 600; font-size: 14px; color: #f1f5f9; line-height: 1.4;">Save Password?</h4>
+          <p style="margin: 0; font-size: 12px; color: #94a3b8; line-height: 1.4;">
+            Securely save credentials for ${window.location.hostname}
+          </p>
+        </div>
+      </div >
+
+      <div style="background: rgba(255, 255, 255, 0.03); border-radius: 8px; padding: 10px; margin-bottom: 16px;">
+         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+            <span style="font-size: 11px; color: #64748b; font-weight: 500;">USERNAME</span>
+            <span style="font-size: 11px; color: #64748b; font-weight: 500;">PASSWORD</span>
+         </div>
+         <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 13px; color: #e2e8f0; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px;">${credentials.username || 'No username'}</span>
+            <span style="font-size: 18px; color: #e2e8f0; line-height: 0.5; margin-top: 6px;">••••••••</span>
+         </div>
       </div>
-      <div style="background: rgba(255, 255, 255, 0.03); border-radius: 8px; padding: 12px; margin-bottom: 16px; font-family: -apple-system, sans-serif;">
-        <div style="font-size: 12px; color: #94a3b8; margin-bottom: 4px;">Username</div>
-        <div style="color: #f1f5f9; font-size: 14px;">${credentials.username || 'No username'}</div>
-      </div>
+
       <div style="display: flex; gap: 8px;">
-        <button id="lens-vault-never" style="flex: 1; padding: 10px; background: rgba(255, 255, 255, 0.05);
-                border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; color: #e2e8f0;
-                cursor: pointer; font-weight: 600; font-size: 14px; font-family: -apple-system, sans-serif;">
-          Never
-        </button>
-        <button id="lens-vault-later" style="flex: 1; padding: 10px; background: rgba(255, 255, 255, 0.05);
-                border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; color: #e2e8f0;
-                cursor: pointer; font-weight: 600; font-size: 14px; font-family: -apple-system, sans-serif;">
-          Not Now
-        </button>
-        <button id="lens-vault-save" style="flex: 1; padding: 10px; background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-                border: none; border-radius: 8px; color: white;
-                cursor: pointer; font-weight: 600; font-size: 14px; font-family: -apple-system, sans-serif;">
+        <button id="lens-vault-save" style="flex: 1; height: 32px; background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+                border: none; border-radius: 6px; color: white;
+                cursor: pointer; font-weight: 500; font-size: 12px; transition: opacity 0.2s;">
           Save
         </button>
+        <button id="lens-vault-later" style="flex: 1; height: 32px; background: transparent;
+                border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: #cbd5e1;
+                cursor: pointer; font-weight: 500; font-size: 12px; transition: background 0.2s;">
+          Not Now
+        </button>
       </div>
-    </div>
-  `;
+      <div style="text-align: center; margin-top: 8px;">
+        <button id="lens-vault-never" style="background: none; border: none; color: #475569; font-size: 10px; cursor: pointer; text-decoration: underline;">
+            Never save for this site
+        </button>
+      </div>
+    </div >
+        `;
 
     document.body.appendChild(overlay);
 

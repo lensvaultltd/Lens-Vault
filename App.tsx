@@ -5,7 +5,6 @@ import { createRoot } from 'react-dom/client';
 const VaultView = React.lazy(() => import('./components/VaultView'));
 const SettingsView = React.lazy(() => import('./components/SettingsView'));
 const SharingView = React.lazy(() => import('./components/SharingView'));
-const DownloadsView = React.lazy(() => import('./components/DownloadsView'));
 
 // Core UI Components
 import { Button } from './components/ui/button';
@@ -209,34 +208,75 @@ const ExtensionPrompt = () => {
     setTimeout(check, 2000);
   }, []);
 
-  const handleDismiss = () => {
+  const handleDismiss = (forever: boolean) => {
     setIsDismissed(true);
-    localStorage.setItem('lens-vault-extension-dismissed', 'true');
+    if (forever) {
+      localStorage.setItem('lens-vault-extension-dismissed', 'true');
+    }
+  };
+
+  const handleInstall = () => {
+    // Show instruction to load local extension
+    toast({
+      title: "How to Install",
+      description: (
+        <div className="space-y-2 text-sm">
+          <p>1. Open <strong>chrome://extensions</strong> in a new tab.</p>
+          <p>2. Enable <strong>Developer mode</strong> (top right).</p>
+          <p>3. Click <strong>Load unpacked</strong>.</p>
+          <p>4. Select folder: <code className="bg-muted px-1 rounded block mt-1 break-all">C:\Users\Fatim\Downloads\LensVaultExtension</code></p>
+        </div>
+      ),
+      duration: 15000,
+    });
   };
 
   if (isInstalled || isDismissed) return null;
 
   return (
-    <div className="fixed bottom-6 right-6 z-[100] animate-in slide-in-from-bottom-10 duration-700 ease-out-expo">
-      <div className="p-4 rounded-2xl bg-background/80 backdrop-blur-xl border border-primary/20 shadow-2xl w-80">
-        <div className="flex items-start gap-4">
-          <div className="p-2 bg-primary/10 rounded-xl">
-            <Share2 className="h-6 w-6 text-primary" />
+    <div className="fixed top-5 right-5 z-[100] animate-in slide-in-from-top-5 duration-500">
+      <div className="w-[360px] p-5 rounded-2xl shadow-2xl backdrop-blur-xl border border-primary/30"
+        style={{
+          background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'
+        }}>
+
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-primary to-[#0284c7]">
+            <Lock className="h-5 w-5 text-white" />
           </div>
-          <div className="space-y-1">
-            <h4 className="font-semibold text-sm">Connect Extension</h4>
-            <p className="text-xs text-muted-foreground">
-              Enable auto-fill and secure login detection without local storage.
-            </p>
+          <div className="flex-1 font-semibold text-[15px] text-slate-100 font-sans">
+            Connect Lens Vault Extension?
           </div>
         </div>
-        <div className="flex gap-2 mt-4">
-          <Button size="sm" className="w-full text-xs h-8" onClick={() => window.open('https://chrome.google.com/webstore', '_blank')}>
+
+        {/* Content */}
+        <div className="bg-white/5 rounded-lg p-3 mb-4 font-sans">
+          <div className="text-xs text-slate-400 mb-1">Status</div>
+          <div className="text-sm text-slate-100">Extension not detected</div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-2 font-sans">
+          <button
+            onClick={() => handleDismiss(true)}
+            className="flex-1 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-slate-200 text-sm font-semibold transition-colors"
+          >
+            Never
+          </button>
+          <button
+            onClick={() => handleDismiss(false)}
+            className="flex-1 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-slate-200 text-sm font-semibold transition-colors"
+          >
+            Not Now
+          </button>
+          <button
+            onClick={handleInstall}
+            className="flex-1 py-2.5 bg-gradient-to-br from-primary to-[#0284c7] hover:brightness-110 rounded-lg text-white text-sm font-semibold transition-all shadow-lg shadow-primary/20"
+          >
             Install
-          </Button>
-          <Button size="sm" variant="ghost" className="w-full text-xs h-8" onClick={() => setIsDismissed(true)}>
-            Later
-          </Button>
+          </button>
         </div>
       </div>
     </div>
@@ -855,9 +895,6 @@ function App() {
                 )}
                 <TabsTrigger value="settings" className="gap-2 whitespace-nowrap flex-shrink-0 rounded-xl data-[state=active]:shadow-md transition-all duration-300">
                   <Settings className="h-4 w-4" />Settings
-                </TabsTrigger>
-                <TabsTrigger value="downloads" className="gap-2 whitespace-nowrap flex-shrink-0 rounded-xl data-[state=active]:shadow-md transition-all duration-300">
-                  <FileDown className="h-4 w-4" />Downloads
                 </TabsTrigger>
               </>
             )}
