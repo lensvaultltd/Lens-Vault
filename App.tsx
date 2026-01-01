@@ -5,6 +5,7 @@ import { createRoot } from 'react-dom/client';
 const VaultView = React.lazy(() => import('./components/VaultView'));
 const SettingsView = React.lazy(() => import('./components/SettingsView'));
 const SharingView = React.lazy(() => import('./components/SharingView'));
+const DownloadsView = React.lazy(() => import('./components/DownloadsView'));
 
 // Core UI Components
 import { Button } from './components/ui/button';
@@ -854,6 +855,9 @@ function App() {
                 )}
                 <TabsTrigger value="settings" className="gap-2 whitespace-nowrap flex-shrink-0 rounded-xl data-[state=active]:shadow-md transition-all duration-300">
                   <Settings className="h-4 w-4" />Settings
+                </TabsTrigger>
+                <TabsTrigger value="downloads" className="gap-2 whitespace-nowrap flex-shrink-0 rounded-xl data-[state=active]:shadow-md transition-all duration-300">
+                  <FileDown className="h-4 w-4" />Downloads
                 </TabsTrigger>
               </>
             )}
