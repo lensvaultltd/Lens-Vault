@@ -1,0 +1,189 @@
+/* Lens Vault Extension Styles (Hybrid Zaha Theme) */
+
+.lens-vault-overlay {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 2147483647;
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.lens-vault-prompt {
+  /* Hybrid Zinc/Lavender Void Background */
+  background: linear-gradient(135deg, #0d0e14 0%, #1a1b26 100%); 
+  border: 1px solid rgba(255, 255, 255, 0.08); /* Subtle border */
+  border-radius: 16px; /* Zaha Radius */
+  padding: 24px;
+  width: 360px;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 0 20px rgba(99, 102, 241, 0.15); /* Indiglow */
+  backdrop-filter: blur(25px);
+  animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); /* Kinetic Easing */
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px) scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.lens-vault-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  color: #f1f5f9;
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+}
+
+.lens-vault-header svg {
+  color: #6366f1; /* Indigo */
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.4));
+}
+
+.lens-vault-content {
+  margin-bottom: 20px;
+}
+
+.lens-vault-field {
+  margin-bottom: 16px;
+}
+
+.lens-vault-field label {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #94a3b8;
+  margin-bottom: 6px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.lens-vault-field div {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px; /* Zaha Input Radius */
+  padding: 10px 14px;
+  color: #e2e8f0;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.lens-vault-field div:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.lens-vault-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.lens-vault-btn {
+  padding: 10px 20px;
+  border-radius: 9999px; /* Pill Shape */
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+  outline: none;
+  letter-spacing: 0.02em;
+}
+
+.lens-vault-btn-primary {
+  /* Hybrid Indigo/Blue Gradient */
+  background: linear-gradient(90deg, #6366f1 0%, #3b82f6 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+}
+
+.lens-vault-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
+  filter: brightness(1.1);
+}
+
+.lens-vault-btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  color: #cbd5e1;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.lens-vault-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+/* Autofill Dropdown */
+.lens-vault-dropdown {
+  position: absolute;
+  z-index: 2147483647;
+  background: #0d0e14; /* Deep Void */
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  box-shadow: 
+    0 15px 40px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 0 15px rgba(99, 102, 241, 0.1);
+  overflow: hidden;
+  animation: dropdownSlide 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(20px);
+}
+
+@keyframes dropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.lens-vault-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  color: #e2e8f0;
+  font-size: 14px;
+  transition: all 0.15s ease;
+  border-bottom: 1px solid rgba(255,255,255,0.02);
+}
+
+.lens-vault-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.lens-vault-dropdown-item:hover {
+  background: rgba(99, 102, 241, 0.15); /* Indigo tint */
+  padding-left: 20px; /* Kinetic hover movement */
+}
+
+.lens-vault-dropdown-item svg {
+  color: #6366f1;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 5px rgba(99, 102, 241, 0.3));
+}
+
+.lens-vault-dropdown-item span {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
