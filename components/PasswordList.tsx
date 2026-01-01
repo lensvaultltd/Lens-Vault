@@ -1,28 +1,17 @@
 import React, { useState, useMemo } from 'react';
-import { IPasswordEntry, Folder } from '../types';
+import { IPasswordEntry } from '../types';
 import { Input } from './ui/input';
 import {
-  CreditCard, Building, FileText, User, Search, Mail, MoreVertical, Edit, Trash2, Share2, UserPlus
+  CreditCard, Building, FileText, User, Search, Mail, MoreVertical, Edit, Trash2, Share2, UserPlus, Key
 } from 'lucide-react';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from './ui/alert-dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
 } from './ui/dropdown-menu';
 import { Button } from './ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
-
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
+} from './ui/alert-dialog';
 
 interface PasswordListProps {
   entries: IPasswordEntry[];
@@ -32,187 +21,161 @@ interface PasswordListProps {
   isSharedView: boolean;
 }
 
-const typeDetails: { [key in IPasswordEntry['type']]: { icon: React.ElementType; color: string; defaultName: string } } = {
-  login: { icon: Mail, color: 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400', defaultName: 'Login' },
-  'bank-account': { icon: Building, color: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400', defaultName: 'Bank Account' },
-  'secure-note': { icon: FileText, color: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400', defaultName: 'Secure Note' },
-  'credit-card': { icon: CreditCard, color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400', defaultName: 'Credit Card' },
-  identity: { icon: User, color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400', defaultName: 'Identity' },
+const typeDetails: { [key in IPasswordEntry['type']]: { icon: React.ElementType; color: string; gradient: string } } = {
+  login: {
+    icon: Mail,
+    color: 'text-rose-400',
+    gradient: 'from-rose-500/20 to-orange-500/10'
+  },
+  'bank-account': {
+    icon: Building,
+    color: 'text-emerald-400',
+    gradient: 'from-emerald-500/20 to-teal-500/10'
+  },
+  'secure-note': {
+    icon: FileText,
+    color: 'text-amber-400',
+    gradient: 'from-amber-500/20 to-yellow-500/10'
+  },
+  'credit-card': {
+    icon: CreditCard,
+    color: 'text-blue-400',
+    gradient: 'from-blue-500/20 to-indigo-500/10'
+  },
+  identity: {
+    icon: User,
+    color: 'text-purple-400',
+    gradient: 'from-purple-500/20 to-pink-500/10'
+  },
 };
-
 
 const PasswordList: React.FC<PasswordListProps> = ({ entries, onEdit, onDelete, onShare, isSharedView }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState<IPasswordEntry | null>(null);
 
   const filteredEntries = useMemo(() => {
     return entries.filter(entry => {
       if (!searchTerm) return true;
-      const lowerSearch = searchTerm.toLowerCase();
+      const lower = searchTerm.toLowerCase();
       return (
-        entry.name.toLowerCase().includes(lowerSearch) ||
-        (entry.siteName && entry.siteName.toLowerCase().includes(lowerSearch)) ||
-        (entry.username && entry.username.toLowerCase().includes(lowerSearch)) ||
-        entry.tags.some(tag => tag.toLowerCase().includes(lowerSearch))
+        entry.name.toLowerCase().includes(lower) ||
+        (entry.siteName && entry.siteName.toLowerCase().includes(lower) || '') ||
+        (entry.username && entry.username.toLowerCase().includes(lower) || '')
       );
     }).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
   }, [entries, searchTerm]);
 
   if (entries.length === 0 && !isSharedView) {
     return (
-      <div className="text-center py-12">
-        <div className="text-muted-foreground text-lg mb-2">No entries saved yet</div>
-        <div className="text-muted-foreground/80">Click "Add Entry" to get started</div>
+      <div className="flex flex-col items-center justify-center py-20 opacity-50">
+        <div className="w-24 h-24 mb-6 rounded-full bg-white/5 flex items-center justify-center animate-pulse">
+          <Key className="w-10 h-10 text-muted-foreground" />
+        </div>
+        <div className="text-xl font-light tracking-wide text-muted-foreground">The Vault is Empty</div>
+        <div className="text-sm mt-2 text-muted-foreground/60">Create your first secure object to begin.</div>
       </div>
     );
   }
 
-  const getSubtitle = (entry: IPasswordEntry) => {
-    if (entry.type === 'login' && entry.passwordStrength) {
-      return entry.passwordStrength.label + " Login";
-    }
-    return typeDetails[entry.type]?.defaultName || 'Entry';
-  }
-
-  const getRightSideInfo = (entry: IPasswordEntry) => {
-    if (entry.type === 'login' && entry.passwordStrength) {
-      return {
-        top: `${entry.passwordStrength.score}/100`,
-        bottom: 'Strength',
-        color: entry.passwordStrength.color,
-      };
-    }
-    if (entry.type === 'bank-account' || entry.type === 'credit-card') {
-      return { top: 'AES-256', bottom: 'Encryption', color: 'text-blue-500' };
-    }
-    return { top: 'Zero +', bottom: 'Knowledge', color: 'text-green-500' };
-  }
-
-  const handleDeleteRequest = (entry: IPasswordEntry) => {
-    setEntryToDelete(entry);
-    setIsDeleteDialogOpen(true);
-  };
-
-  const confirmDelete = () => {
-    if (entryToDelete) {
-      onDelete(entryToDelete.id);
-    }
-    setEntryToDelete(null);
-  };
-
   return (
-    <div className="space-y-4">
-      <div className="relative flex-1">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-        <Input
-          placeholder="Search vault..."
-          value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
-          className="pl-10"
-          aria-label="Search vault"
-        />
+    <div className="space-y-8">
+      {/* Zaha Search Bar: Floating Void */}
+      <div className="relative group max-w-2xl mx-auto">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-blue-500/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+        <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl flex items-center px-4 py-1 shadow-2xl transition-all duration-300 group-hover:bg-white/10 focus-within:ring-2 focus-within:ring-primary/50">
+          <Search className="text-muted-foreground w-5 h-5 mr-3" />
+          <input
+            type="text"
+            placeholder="Search secure objects..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="bg-transparent border-none outline-none w-full py-3 text-lg placeholder:text-muted-foreground/50 text-white"
+          />
+        </div>
       </div>
 
-      <div className="space-y-3">
-        {filteredEntries.map(entry => {
-          const details = typeDetails[entry.type];
+      {/* Masonry Grid Layout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-20">
+        {filteredEntries.map((entry, index) => {
+          const details = typeDetails[entry.type] || typeDetails['login'];
           const Icon = details.icon;
-          const rightInfo = getRightSideInfo(entry);
+
           return (
             <div
               key={entry.id}
-              className="bg-card/60 dark:bg-card/30 p-3 rounded-lg shadow-sm hover:shadow-lg hover:bg-card/90 dark:hover:bg-card/50 transition-all flex items-center gap-4 cursor-pointer"
+              className="zaha-card group cursor-pointer animate-in fade-in zoom-in duration-500 fill-mode-backwards"
+              style={{ animationDelay: `${index * 50}ms` }}
               onClick={() => onEdit(entry)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onEdit(entry)}
-              aria-label={`Edit ${entry.name} - ${getSubtitle(entry)}`}
             >
-              <div className={`p-3 rounded-lg ${details.color}`}>
-                <Icon className="h-5 w-5" />
+              {/* Internal Gradient Glow */}
+              <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${details.gradient} blur-3xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700 translate-x-10 -translate-y-10`}></div>
+
+              <div className="p-6 relative z-10 h-full flex flex-col">
+                <div className="flex justify-between items-start mb-4">
+                  <div className={`p-3 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 shadow-inner group-hover:scale-110 transition-transform duration-500 ${details.color}`}>
+                    <Icon className="h-6 w-6" />
+                  </div>
+
+                  {/* Actions Menu */}
+                  <div onClick={e => e.stopPropagation()}>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 rounded-full hover:bg-white/10 p-0 text-muted-foreground hover:text-white">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="bg-[#0f1115]/90 backdrop-blur-xl border-white/10 text-white">
+                        <DropdownMenuItem onClick={() => onEdit(entry)} className="focus:bg-white/10 cursor-pointer">
+                          <Edit className="mr-2 h-4 w-4" /> {isSharedView ? 'View' : 'Edit'}
+                        </DropdownMenuItem>
+                        {!isSharedView && (
+                          <>
+                            <DropdownMenuItem onClick={() => onShare(entry)} className="focus:bg-white/10 cursor-pointer">
+                              <Share2 className="mr-2 h-4 w-4" /> Share
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setEntryToDelete(entry)} className="text-red-400 focus:bg-red-500/20 cursor-pointer">
+                              <Trash2 className="mr-2 h-4 w-4" /> Delete
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+
+                <h3 className="text-xl font-bold tracking-tight text-white/90 mb-1 truncate group-hover:text-primary transition-colors duration-300">{entry.name}</h3>
+                <p className="text-sm text-muted-foreground truncate mb-6">{entry.username || 'No username'}</p>
+
+                <div className="mt-auto flex items-center justify-between pt-4 border-t border-white/5">
+                  <div className="flex -space-x-2">
+                    {entry.sharedWith && entry.sharedWith.length > 0 && (
+                      <div className="w-6 h-6 rounded-full bg-primary/20 border border-[#0f1115] flex items-center justify-center text-[10px] text-primary font-bold">
+                        {entry.sharedWith.length}
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-xs text-muted-foreground/50 font-mono tracking-wider">
+                    {new Date(entry.updatedAt).toLocaleDateString()}
+                  </span>
+                </div>
               </div>
-
-              <div className="flex-1 min-w-0 md:pl-4">
-                <h3 className="font-semibold text-base sm:text-lg truncate">{entry.name}</h3>
-                <p className="text-sm text-muted-foreground">{getSubtitle(entry)}</p>
-              </div>
-
-              <div className="text-right flex-shrink-0 hidden sm:block md:min-w-[100px]">
-                <div className={`font-bold text-sm md:text-base ${rightInfo.color}`}>{rightInfo.top}</div>
-                <p className="text-xs text-muted-foreground">{rightInfo.bottom}</p>
-              </div>
-
-              {entry.sharedWith && entry.sharedWith.length > 0 && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <UserPlus className="h-4 w-4 text-primary flex-shrink-0" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Shared with {entry.sharedWith.length} contact(s)</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0 -mr-2" onClick={(e) => e.stopPropagation()}>
-                    <MoreVertical className="h-4 w-4" />
-                    <span className="sr-only">More options</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                  <DropdownMenuItem onSelect={() => onEdit(entry)}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    <span>{isSharedView ? 'View Details' : 'Edit'}</span>
-                  </DropdownMenuItem>
-                  {!isSharedView && (
-                    <>
-                      <DropdownMenuItem onSelect={() => onShare(entry)}>
-                        <Share2 className="mr-2 h-4 w-4" />
-                        <span>Share</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onSelect={() => handleDeleteRequest(entry)}
-                        className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        <span>Delete</span>
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
             </div>
-          )
+          );
         })}
-        {filteredEntries.length === 0 && searchTerm && (
-          <div className="text-center py-8 text-muted-foreground">No entries found matching your search</div>
-        )}
-        {filteredEntries.length === 0 && entries.length > 0 && !searchTerm && (
-          <div className="text-center py-8 text-muted-foreground">No entries in this folder</div>
-        )}
-        {filteredEntries.length === 0 && isSharedView && (
-          <div className="text-center py-12 text-muted-foreground">No items have been shared with this contact yet.</div>
-        )}
       </div>
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
+
+      <AlertDialog open={!!entryToDelete} onOpenChange={() => setEntryToDelete(null)}>
+        <AlertDialogContent className="zaha-card border-none bg-[#0f1115]/95">
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete the entry "{entryToDelete?.name}"? This action cannot be undone.
+            <AlertDialogTitle className="text-white">Delete Object?</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              This action creates a permanent void. "{entryToDelete?.name}" will be lost effectively forever.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setEntryToDelete(null)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={confirmDelete}
-            >
-              Delete
+            <AlertDialogCancel className="bg-transparent border-white/10 hover:bg-white/5 text-white">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { if (entryToDelete) onDelete(entryToDelete.id); setEntryToDelete(null); }} className="bg-red-600 hover:bg-red-700 border-none text-white">
+              Incinerate
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

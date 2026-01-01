@@ -4,70 +4,42 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 224 71% 4%;
+    /* Zaha Hadid Palette: "Liquid Void" */
+    --background: 240 10% 4%; /* Deepest void */
+    --foreground: 0 0% 98%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 224 71% 4%;
+    --card: 240 10% 7%; /* Slightly lighter void */
+    --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 224 71% 4%;
+    --popover: 240 10% 7%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 220 9% 46%;
+    /* "Electric Curve" Accent */
+    --primary: 260 100% 65%; /* Vibrant electric violet */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 13% 91%;
-    --secondary-foreground: 224 71% 4%;
+    --secondary: 240 5% 15%; /* Metal grey */
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 220 13% 91%;
-    --muted-foreground: 220 9% 46%;
+    --muted: 240 5% 15%;
+    --muted-foreground: 240 5% 65%;
 
-    --accent: 220 13% 91%;
-    --accent-foreground: 224 71% 4%;
+    --accent: 260 50% 50%;
+    --accent-foreground: 0 0% 98%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 220 13% 91%;
-    --input: 220 9% 46%;
-    --ring: 220 9% 46%;
-    --radius: 0.5rem;
+    --border: 240 5% 20%;
+    --input: 240 5% 20%;
+    --ring: 260 100% 65%;
 
-    --bg-gradient-start: hsla(210, 100%, 92%, 0.3);
-    --bg-gradient-middle: hsla(220, 20%, 85%, 0.4);
-  }
+    --radius: 1.5rem; /* Super-rounded architectural curves */
 
-  .dark {
-    --background: 224 71% 4%;
-    --foreground: 210 20% 98%;
-
-    --card: 224 71% 4%;
-    --card-foreground: 210 20% 98%;
-
-    --popover: 224 71% 4%;
-    --popover-foreground: 210 20% 98%;
-
-    --primary: 215 20% 65%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 215 28% 17%;
-    --secondary-foreground: 210 20% 98%;
-
-    --muted: 215 28% 17%;
-    --muted-foreground: 215 20% 65%;
-
-    --accent: 215 28% 17%;
-    --accent-foreground: 210 20% 98%;
-
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 20% 98%;
-
-    --border: 215 28% 17%;
-    --input: 215 20% 65%;
-    --ring: 215 20% 65%;
-
-    --bg-gradient-start: hsla(210, 50%, 15%, 0.4);
-    --bg-gradient-middle: hsla(220, 15%, 25%, 0.3);
+    /* Fluid Gradients */
+    --fluid-gradient: linear-gradient(135deg, hsl(240 10% 4%), hsl(260 20% 10%));
+    --metal-gradient: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
+    --neon-glow: 0 0 20px rgba(139, 92, 246, 0.3);
   }
 }
 
@@ -77,114 +49,114 @@
   }
   body {
     @apply bg-background text-foreground;
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
-    background-image: radial-gradient(at 15% 85%, var(--bg-gradient-start), transparent 50%),
-      radial-gradient(at 80% 20%, var(--bg-gradient-middle), transparent 50%);
-    background-attachment: fixed;
-    background-size: 100% 100%;
-    transition: background-color 0.3s ease;
+    background-image: 
+      radial-gradient(circle at 0% 0%, rgba(139, 92, 246, 0.15), transparent 40%),
+      radial-gradient(circle at 100% 100%, rgba(56, 189, 248, 0.1), transparent 40%);
+    min-height: 100vh;
+    overflow-x: hidden;
+    font-family: 'Outfit', sans-serif; /* Architectural Sans */
   }
 }
 
-.bg-gradient-accent {
-  background-image: linear-gradient(to right, hsl(var(--primary)), hsl(220, 9%, 60%));
-  border: 1px solid hsl(var(--primary));
-  color: hsl(var(--primary-foreground));
+/* --- ZAHA ARCHITECTURAL CLASSES --- */
+
+/* The Container: Fluid Space */
+.zaha-container {
+  @apply relative w-full h-full overflow-hidden;
+  backdrop-filter: blur(40px);
 }
 
-.dark .bg-gradient-accent {
-  background-image: linear-gradient(to right, hsl(var(--primary)), hsl(215, 20%, 50%));
+/* The Cards: Floating Slabs */
+.zaha-card {
+  @apply relative overflow-hidden transition-all duration-500 ease-out;
+  background: var(--metal-gradient);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5);
 }
 
-.bg-gradient-accent:hover {
-  opacity: 0.9;
+.zaha-card:hover {
+  transform: translateY(-5px) scale(1.01);
+  box-shadow: 
+    0 20px 50px -10px rgba(0,0,0,0.6),
+    var(--neon-glow);
+  border-color: rgba(139, 92, 246, 0.3);
 }
 
-.text-gradient-heading {
-  background-image: linear-gradient(to right, hsl(var(--foreground)), hsl(var(--primary)));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+/* The Inputs: Sculpted Voids */
+.zaha-input {
+  @apply bg-transparent border-b-2 border-white/10 px-4 py-3 outline-none transition-all duration-300;
+  border-radius: 0.5rem 0.5rem 0 0;
+  background: rgba(255,255,255,0.02);
 }
 
-.card-lift-hover {
-  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+.zaha-input:focus {
+  background: rgba(255,255,255,0.05);
+  border-color: hsl(var(--primary));
 }
 
-.card-lift-hover:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 20px -5px hsl(var(--primary) / 0.1), 0 4px 6px -2px hsl(var(--primary) / 0.05);
+/* The Buttons: Kinetic Energy */
+.zaha-btn {
+  @apply relative overflow-hidden px-6 py-3 font-semibold tracking-wide transition-all duration-300;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, hsl(260 100% 65%), hsl(280 100% 65%));
+  color: white;
+  box-shadow: 0 5px 20px rgba(139, 92, 246, 0.4);
 }
 
-.dark .card-lift-hover:hover {
-  box-shadow: 0 10px 20px -5px hsl(var(--primary) / 0.2), 0 4px 6px -2px hsl(var(--primary) / 0.1);
+.zaha-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(139, 92, 246, 0.6);
+  filter: brightness(1.1);
 }
 
-.card-glow {
-  --glow-color: hsl(var(--primary) / 0.3);
-  box-shadow: 0 0 15px var(--glow-color), 0 0 5px var(--glow-color);
+.zaha-btn:active {
+  transform: translateY(1px);
 }
 
-/* Hide scrollbar for mobile tab navigation */
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+/* Liquid Navigation */
+.zaha-nav-item {
+  @apply relative flex items-center gap-3 px-6 py-4 transition-all duration-300 rounded-2xl text-muted-foreground;
 }
 
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+.zaha-nav-item:hover, .zaha-nav-item.active {
+  @apply text-white bg-white/5;
+  box-shadow: inset 0 0 20px rgba(255,255,255,0.05);
 }
 
-@keyframes progress {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+.zaha-nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 15%;
+  bottom: 15%;
+  width: 4px;
+  background: hsl(var(--primary));
+  border-radius: 0 4px 4px 0;
+  box-shadow: 0 0 10px hsl(var(--primary));
 }
 
-.animate-float {
-  animation: float 3s ease-in-out infinite;
+/* Scrollbar: Invisible flow */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.2);
 }
 
-.animate-progress {
-  animation: progress 2s ease-in-out infinite;
+/* Responsive Fluidity */
+@media (max-width: 768px) {
+  .zaha-card {
+    border-radius: 1rem;
+    backdrop-filter: blur(30px);
+  }
 }
-
-/* Glassmorphism 2.0 - Premium Refinement */
-.backdrop-blur-md {
-  backdrop-filter: blur(12px) saturate(180%);
-  background-color: rgba(var(--background), 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-}
-
-/* Living Background Pulse */
-@keyframes living-bg {
-  0%, 100% { background-position: 0% 50%; opacity: 0.8; }
-  50% { background-position: 100% 50%; opacity: 1; }
-}
-
-body {
-  background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.05), transparent 40%),
-              radial-gradient(circle at bottom left, rgba(168, 85, 247, 0.05), transparent 40%),
-              var(--background);
-  background-attachment: fixed;
-  position: relative;
-}
-
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background: linear-gradient(-45deg, rgba(var(--primary), 0.02), rgba(var(--accent), 0.02));
-  background-size: 400% 400%;
-  animation: living-bg 15s ease infinite;
-  z-index: -1;
-  pointer-events: none;
-}
-
-.delay-75 { animation-delay: 75ms; }
-.delay-150 { animation-delay: 150ms; }

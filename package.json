@@ -12,7 +12,8 @@
     "preview": "vite preview",
     "electron:dev": "NODE_ENV=development electron .",
     "electron:build": "npm run build && electron-builder --win",
-    "electron:build:dir": "npm run build && electron-builder --win --dir"
+    "electron:build:dir": "npm run build && electron-builder --win --dir",
+    "extension:build": "cd extension && tsc && node build-extension.js"
   },
   "dependencies": {
     "@capacitor/android": "^8.0.0",

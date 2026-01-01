@@ -45,16 +45,51 @@ class SharedAccessService {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error('Not authenticated');
 
-            // For now, we'll use simple encryption
-            // In production, this would use RSA + AES hybrid encryption
-            const credentials = {
+            // 1. Generate a random AES Key (32 bytes)
+            const rawKey = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, ''); // Simple way to get adequate entropy for this demo or use proper random values
+            // Better: use Web Crypto API for key generation
+            const keyBytes = new Uint8Array(32);
+            crypto.getRandomValues(keyBytes);
+            const encryptionKey = btoa(String.fromCharCode(...keyBytes)); // Base64 key for URL
+
+            // 2. Encrypt Credentials (AES-GCM)
+            // We use a simple helper to keep this self-contained or import a library
+            // For simplicity here, we will use the existing CryptoJS or WebCrypto if available
+            // Let's use the EncryptionService we verified earlier if possible, but it uses a static master/secret key.
+            // So we use standard Web Crypto API here for "Zero Knowledge" link sharing.
+
+            const iv = new Uint8Array(12);
+            crypto.getRandomValues(iv);
+
+            const enc = new TextEncoder();
+            const dataToEncrypt = enc.encode(JSON.stringify({
                 username: options.username,
                 password: options.password
-            };
+            }));
 
-            // Simple base64 encoding for demo (REPLACE with proper encryption in production)
-            const encryptedCredentials = btoa(JSON.stringify(credentials));
-            const encryptedKey = btoa('demo-key'); // Placeholder
+            const importedKey = await crypto.subtle.importKey(
+                "raw",
+                keyBytes,
+                "AES-GCM",
+                false,
+                ["encrypt"]
+            );
+
+            const encryptedBuffer = await crypto.subtle.encrypt(
+                { name: "AES-GCM", iv: iv },
+                importedKey,
+                dataToEncrypt
+            );
+
+            // Combine IV + Ciphertext
+            const encryptedArray = new Uint8Array(iv.length + encryptedBuffer.byteLength);
+            encryptedArray.set(iv);
+            encryptedArray.set(new Uint8Array(encryptedBuffer), iv.length);
+
+            const encryptedCredentials = btoa(String.fromCharCode(...encryptedArray));
+
+            // WE DO NOT STORE THE KEY IN THE DB
+            // The key is sent in the URL fragment to the recipient
 
             // Create shared access record
             const { data: sharedAccess, error } = await supabase
@@ -67,7 +102,8 @@ class SharedAccessService {
                     service_name: options.serviceName,
                     service_url: options.serviceUrl,
                     encrypted_credentials: encryptedCredentials,
-                    encrypted_key: encryptedKey,
+                    // encrypted_key: null, // We don't store this! Or we store a generic placebo if DB requires it.
+                    encrypted_key: 'LINK_BASED_SHARING',
                     expires_at: options.expiresAt?.toISOString(),
                     can_auto_login: options.canAutoLogin ?? true,
                     auto_revoke_after_use: options.autoRevokeAfterUse ?? false,
@@ -78,12 +114,17 @@ class SharedAccessService {
 
             if (error) throw error;
 
-            // Send invitation email
+            // Generate the secure link with the key in fragment
+            // URL format: https://.../accept/{id}#key={encryptionKey}
+            const shareUrl = `${window.location.origin}/shared-access/accept/${sharedAccess.id}#key=${encryptionKey}`;
+
+            // Send invitation email (with the link containing the key)
             await this.sendInvitationEmail(
                 recipientEmail,
                 user.email!,
                 options.serviceName,
-                sharedAccess.id
+                sharedAccess.id,
+                shareUrl // Pass the full secure URL
             );
 
             // Create audit log
@@ -97,7 +138,7 @@ class SharedAccessService {
 
             return {
                 success: true,
-                message: `Access invitation sent to ${recipientEmail}`,
+                message: `Secure access link sent to ${recipientEmail}`,
                 invitationId: sharedAccess.id
             };
         } catch (error: any) {
@@ -192,7 +233,7 @@ class SharedAccessService {
     /**
      * Auto-login to a shared service
      */
-    async autoLogin(sharedAccessId: string): Promise<{
+    async autoLogin(sharedAccessId: string, decryptionKeyBase64?: string): Promise<{
         success: boolean;
         credentials?: { username: string; password: string };
         serviceUrl?: string;
@@ -220,8 +261,43 @@ class SharedAccessService {
                 throw new Error('Access has expired');
             }
 
-            // Decrypt credentials (simplified for demo)
-            const credentialsJson = atob(sharedAccess.encrypted_credentials);
+            // Decrypt credentials
+            if (!decryptionKeyBase64) {
+                // Try extracting from window location hash if not provided explicitly (fallback)
+                const hashParams = new URLSearchParams(window.location.hash.slice(1));
+                decryptionKeyBase64 = hashParams.get('key') || undefined;
+            }
+
+            if (!decryptionKeyBase64) {
+                throw new Error("Missing decryption key. Please use the original link shared with you.");
+            }
+
+            // Convert base64 inputs back to buffers
+            const encryptedBytes = Uint8Array.from(atob(sharedAccess.encrypted_credentials), c => c.charCodeAt(0));
+            const keyBytes = Uint8Array.from(atob(decryptionKeyBase64), c => c.charCodeAt(0));
+
+            // Extract IV (first 12 bytes) and Ciphertext
+            const iv = encryptedBytes.slice(0, 12);
+            const ciphertext = encryptedBytes.slice(12);
+
+            // Import Key
+            const cryptoKey = await crypto.subtle.importKey(
+                "raw",
+                keyBytes,
+                "AES-GCM",
+                false,
+                ["decrypt"]
+            );
+
+            // Decrypt
+            const decryptedBuffer = await crypto.subtle.decrypt(
+                { name: "AES-GCM", iv: iv },
+                cryptoKey,
+                ciphertext
+            );
+
+            const dec = new TextDecoder();
+            const credentialsJson = dec.decode(decryptedBuffer);
             const credentials = JSON.parse(credentialsJson);
 
             // Create session
@@ -468,7 +544,8 @@ class SharedAccessService {
         recipientEmail: string,
         ownerEmail: string,
         serviceName: string,
-        invitationId: string
+        invitationId: string,
+        shareUrl: string
     ): Promise<void> {
         const resendApiKey = import.meta.env.VITE_RESEND_API_KEY;
         if (!resendApiKey) {
@@ -477,7 +554,7 @@ class SharedAccessService {
         }
 
         const resend = new Resend(resendApiKey);
-        const acceptUrl = `https://lensvault.vercel.app/shared-access/accept/${invitationId}`;
+        // The acceptUrl is now passed in as shareUrl which includes the #key hash
 
         await resend.emails.send({
             from: 'Lens Vault <noreply@lensvault.com>',
@@ -498,7 +575,7 @@ class SharedAccessService {
               <li>✅ Fully secure and audited</li>
             </ul>
           </div>
-          <a href="${acceptUrl}" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 10px;">
+          <a href="${shareUrl}" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 10px;">
             Accept Invitation
           </a>
           <p style="margin-top: 20px; color: #6b7280; font-size: 12px;">
