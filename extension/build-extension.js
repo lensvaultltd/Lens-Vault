@@ -10,6 +10,7 @@ const filesToCopy = [
     'manifest.json',
     'popup.html',
     'styles/autofill.css',
+    'styles/main.css',
     '../public/icons'
 ];
 
