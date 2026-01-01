@@ -4,43 +4,42 @@
 
 @layer base {
   :root {
-    /* Hybrid Palette: Standard Dark + Touch of Liquid Void (Lavender Grey) */
-    /* Base is Zinc-950 but shifted slightly towards Indigo/Violet for that "Lavender Grey" feel */
-    --background: 247 15% 5%; /* Very deep Lavender/Grey Void */
-    --foreground: 210 20% 98%;
+    /* Standard Dark Palette (Zinc/Slate based) - "Old Color" */
+    --background: 240 10% 3.9%; /* Zinc-950 */
+    --foreground: 0 0% 98%;
 
-    --card: 247 15% 8%; /* Lighter Lavender/Grey Void for cards */
-    --card-foreground: 210 20% 98%;
+    --card: 240 10% 6%; /* Zinc-900 */
+    --card-foreground: 0 0% 98%;
 
-    --popover: 247 15% 8%;
-    --popover-foreground: 210 20% 98%;
+    --popover: 240 10% 6%;
+    --popover-foreground: 0 0% 98%;
 
-    /* "Electric Blue" with a hint of Violet to bridge the gap */
-    --primary: 230 85% 65%; /* Blue-Violet hybrid (Electric Indigo) */
-    --primary-foreground: 210 20% 98%;
+    /* Standard Primary Blue */
+    --primary: 217 91% 60%; /* Blue-500 */
+    --primary-foreground: 222 47% 11%;
 
-    --secondary: 247 10% 15%; /* Muted Lavender Grey */
-    --secondary-foreground: 210 20% 98%;
+    --secondary: 240 3.7% 15.9%; /* Zinc-800 */
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 247 10% 15%;
-    --muted-foreground: 247 10% 65%; /* Lavender Grey text */
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
 
-    --accent: 247 10% 20%;
-    --accent-foreground: 210 20% 98%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 247 10% 15%;
-    --input: 247 10% 15%;
-    --ring: 230 85% 65%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
 
-    --radius: 1.0rem; /* Balanced curves (between 0.75 and 1.5) */
+    --radius: 0.75rem;
 
-    /* Hybrid Gradients: Blue/White with Lavender Grey void touches */
-    --fluid-gradient: linear-gradient(135deg, hsl(247 15% 5%), hsl(230 25% 10%)); 
-    --metal-gradient: linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
-    --neon-glow: 0 0 20px rgba(110, 120, 255, 0.25); /* Indiglow */
+    /* Standard Gradients (No Lavender) */
+    --fluid-gradient: linear-gradient(135deg, hsl(240 10% 4%), hsl(240 10% 10%)); 
+    --metal-gradient: linear-gradient(145deg, rgba(255,255,255,0.03), rgba(255,255,255,0.005));
+    --neon-glow: 0 0 15px rgba(59, 130, 246, 0.2);
   }
 }
 
@@ -51,8 +50,8 @@
   body {
     @apply bg-background text-foreground;
     background-image: 
-      radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.12), transparent 45%), /* Indigo/Lavender tint */
-      radial-gradient(circle at 100% 100%, rgba(56, 189, 248, 0.1), transparent 45%); /* Sky Blue tint */
+      radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.08), transparent 40%),
+      radial-gradient(circle at 100% 100%, rgba(14, 165, 233, 0.05), transparent 40%);
     min-height: 100vh;
     overflow-x: hidden;
     font-family: 'Outfit', sans-serif;
