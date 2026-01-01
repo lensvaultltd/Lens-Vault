@@ -81,6 +81,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     // Save credential to Supabase
     if (request.action === 'SAVE_CREDENTIAL') {
+        console.log('🔒 Lens Vault: Saving credential for', request.website);
         (async () => {
             try {
                 const result = await supabase.insert('vault_items', {
@@ -91,16 +92,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     name: new URL(request.website).hostname,
                 });
 
+                console.log('🔒 Lens Vault: Save success', result);
                 chrome.action.setBadgeText({ text: '✓' });
                 chrome.action.setBadgeBackgroundColor({ color: '#10b981' });
                 setTimeout(() => chrome.action.setBadgeText({ text: '' }), 2000);
 
                 sendResponse({ success: true, data: result });
             } catch (error) {
+                console.error('🔒 Lens Vault: Save error', error);
                 sendResponse({ success: false, error: error.message });
             }
         })();
-        return true;
+        return true; // Keep channel open for async response
     }
 
     // Get vault entries from Supabase

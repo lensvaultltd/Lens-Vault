@@ -204,9 +204,6 @@ function showSavePrompt(credentials) {
 
     const overlay = document.createElement('div');
     overlay.id = 'lens-vault-save-prompt';
-    overlay.innerHTML = `
-    const overlay = document.createElement('div');
-    overlay.id = 'lens-vault-save-prompt';
     // Glassmorphism Style Matching App.tsx
     // bg-background/80 -> rgba(11, 20, 39, 0.85) (assuming roughly dark background)
     // border-primary/20 -> rgba(14, 165, 233, 0.2)
@@ -271,13 +268,29 @@ function showSavePrompt(credentials) {
 
     // Button handlers
     document.getElementById('lens-vault-save').onclick = () => {
+        const btn = document.getElementById('lens-vault-save');
+        btn.textContent = 'Saving...';
+        btn.disabled = true;
+
         chrome.runtime.sendMessage({
             action: 'SAVE_CREDENTIAL',
             website: window.location.href,
             username: credentials.username,
             password: credentials.password,
+        }, (response) => {
+            if (chrome.runtime.lastError) {
+                console.error('🔒 Lens Vault: Connection error:', chrome.runtime.lastError.message);
+                alert('Connection to Lens Vault failed. Please reload the page and try again.');
+            } else if (response && response.success) {
+                console.log('🔒 Lens Vault: Saved successfully');
+                overlay.remove();
+            } else {
+                console.error('🔒 Lens Vault: Save failed:', response?.error);
+                btn.textContent = 'Failed';
+                btn.style.background = '#ef4444';
+                setTimeout(() => overlay.remove(), 2000);
+            }
         });
-        overlay.remove();
     };
 
     document.getElementById('lens-vault-never').onclick = () => overlay.remove();
