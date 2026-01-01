@@ -21,7 +21,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
 
       - name: Clear npm cache
         run: npm cache clean --force
@@ -77,8 +77,12 @@ jobs:
       - name: Build Web Project
         run: npm run build
 
-      - name: Capacitor Sync
-        run: npx cap sync ios
+      - name: Ensure iOS Platform
+        run: |
+          if [ ! -d "ios" ]; then
+            npx cap add ios
+          fi
+          npx cap sync ios
 
 
 
