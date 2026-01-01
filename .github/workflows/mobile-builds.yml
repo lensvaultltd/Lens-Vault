@@ -1,0 +1,128 @@
+name: Platform Builds (Android, iOS, Desktop)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Clear npm cache
+        run: npm cache clean --force
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Reinstall Capacitor CLI
+        run: |
+          npm uninstall @capacitor/cli @capacitor/core @capacitor/android
+          npm install @capacitor/cli@latest @capacitor/core@latest @capacitor/android@latest
+
+      - name: Build Web Project
+        run: npm run build
+
+      - name: Capacitor Sync
+        run: npx cap sync android
+
+      - name: Build Android APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: lens-vault-android-release
+          path: android/app/build/outputs/apk/release/app-release-unsigned.apk
+
+  build-ios:
+    name: Build iOS App
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Clear npm cache
+        run: npm cache clean --force
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Reinstall Capacitor CLI
+        run: |
+          npm uninstall @capacitor/cli @capacitor/core @capacitor/ios
+          npm install @capacitor/cli@latest @capacitor/core@latest @capacitor/ios@latest
+
+      - name: Build Web Project
+        run: npm run build
+
+      - name: Ensure iOS Platform
+        run: |
+          if [ ! -d "ios" ]; then
+            npx cap add ios
+          fi
+          npx cap sync ios
+
+
+
+      - name: Build iOS
+        run: |
+          cd ios/App
+          xcodebuild -workspace App.xcworkspace -scheme App -configuration Release -sdk iphoneos -allowProvisioningUpdates build CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload iOS Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: lens-vault-ios-build
+          path: ios/App/build/Release-iphoneos/App.app
+
+  build-desktop:
+    name: Build Desktop EXE
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Check Node Version
+        run: |
+          node -v
+          npm -v
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build Desktop (EXE)
+        run: npm run electron:build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Desktop EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: lens-vault-desktop-exe
+          path: release/*.exe

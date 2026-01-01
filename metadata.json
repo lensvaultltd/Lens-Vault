@@ -1,0 +1,5 @@
+{
+  "name": "Lens Vault",
+  "description": "A secure, zero-knowledge password manager to protect your digital life. Store passwords, financial information, and sensitive documents with end-to-end encryption. Monitor your password security and grant authorized access to trusted individuals.",
+  "requestFramePermissions": []
+}
