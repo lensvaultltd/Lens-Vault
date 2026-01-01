@@ -178,6 +178,70 @@ const TrialBanner = ({ trialEndsAt, onUpgradeClick }: { trialEndsAt: Date | null
 };
 
 
+
+
+
+
+
+
+const ExtensionPrompt = () => {
+  const [isInstalled, setIsInstalled] = React.useState(true); // Default true to prevent flash
+  const [isDismissed, setIsDismissed] = React.useState(false);
+
+  React.useEffect(() => {
+    // Check local storage for dismissal
+    const dismissed = localStorage.getItem('lens-vault-extension-dismissed');
+    if (dismissed === 'true') {
+      setIsDismissed(true);
+      return;
+    }
+
+    const check = () => {
+      // @ts-ignore
+      if (!window.lensVaultExtensionInstalled && !document.getElementById('lens-vault-installed-marker')) {
+        setIsInstalled(false);
+      } else {
+        setIsInstalled(true);
+      }
+    };
+    check();
+    setTimeout(check, 2000);
+  }, []);
+
+  const handleDismiss = () => {
+    setIsDismissed(true);
+    localStorage.setItem('lens-vault-extension-dismissed', 'true');
+  };
+
+  if (isInstalled || isDismissed) return null;
+
+  return (
+    <div className="fixed bottom-6 right-6 z-[100] animate-in slide-in-from-bottom-10 duration-700 ease-out-expo">
+      <div className="p-4 rounded-2xl bg-background/80 backdrop-blur-xl border border-primary/20 shadow-2xl w-80">
+        <div className="flex items-start gap-4">
+          <div className="p-2 bg-primary/10 rounded-xl">
+            <Share2 className="h-6 w-6 text-primary" />
+          </div>
+          <div className="space-y-1">
+            <h4 className="font-semibold text-sm">Connect Extension</h4>
+            <p className="text-xs text-muted-foreground">
+              Enable auto-fill and secure login detection without local storage.
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-2 mt-4">
+          <Button size="sm" className="w-full text-xs h-8" onClick={() => window.open('https://chrome.google.com/webstore', '_blank')}>
+            Install
+          </Button>
+          <Button size="sm" variant="ghost" className="w-full text-xs h-8" onClick={() => setIsDismissed(true)}>
+            Later
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 function App() {
   const [user, setUser] = React.useState<IUser | null>(null);
   const [masterPassword, setMasterPassword] = React.useState<string | null>(null);
@@ -657,7 +721,12 @@ function App() {
   }
 
   if (!user) {
-    return <Auth onAuthenticated={(u, p, k) => handleAuthenticated(u, p, k)} />;
+    return (
+      <>
+        <ExtensionPrompt />
+        <Auth onAuthenticated={(u, p, k) => handleAuthenticated(u, p, k)} />
+      </>
+    );
   }
 
   if (isAdminView) {
@@ -692,6 +761,7 @@ function App() {
 
   return (
     <div className="min-h-screen transition-all duration-700">
+      <ExtensionPrompt />
       <div className="container mx-auto px-4 py-8 max-w-7xl lg:px-8">
         {subscription.status === 'trialing' && <TrialBanner trialEndsAt={subscription.trialEndsAt} onUpgradeClick={() => setActiveTab('settings')} />}
         {viewingAs && (

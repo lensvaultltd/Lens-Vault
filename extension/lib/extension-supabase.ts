@@ -13,10 +13,7 @@ interface VaultEntry {
     updated_at: string;
 }
 
-interface CachedVault {
-    entries: VaultEntry[];
-    lastSync: number;
-}
+
 
 export class ExtensionVaultService {
     private supabase: SupabaseClient;
@@ -38,11 +35,7 @@ export class ExtensionVaultService {
             if (error) console.error('Session restore failed:', error);
         }
 
-        // Load cached vault
-        const cached = await this.loadCachedVault();
-        if (cached) {
-            this.vault = cached.entries;
-        }
+        // In-memory only: No local cache loading
 
         // Initial sync
         await this.syncVault();
@@ -54,23 +47,9 @@ export class ExtensionVaultService {
         this.syncInterval = window.setInterval(() => this.syncVault(), 30000);
     }
 
-    private async loadCachedVault(): Promise<CachedVault | null> {
-        return new Promise((resolve) => {
-            chrome.storage.local.get(['vaultCache'], (result) => {
-                resolve(result.vaultCache || null);
-            });
-        });
-    }
 
-    private async saveCachedVault() {
-        const cache: CachedVault = {
-            entries: this.vault,
-            lastSync: Date.now(),
-        };
-        return new Promise<void>((resolve) => {
-            chrome.storage.local.set({ vaultCache: cache }, () => resolve());
-        });
-    }
+
+
 
     async syncVault() {
         try {
@@ -90,7 +69,8 @@ export class ExtensionVaultService {
 
             if (data) {
                 this.vault = data as VaultEntry[];
-                await this.saveCachedVault();
+                // No caching to local storage
+                console.log('Vault synced to memory (No persistence)');
 
                 // Notify all tabs of vault update
                 chrome.tabs.query({}, (tabs) => {

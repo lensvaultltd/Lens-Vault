@@ -16,6 +16,52 @@ interface PendingCredentials {
 }
 
 class ContentScript {
+    private formDetector: FormDetector;
+    private _siteIsSafe = false;
+    private get siteIsSafe(): boolean { return this._siteIsSafe; }
+
+    constructor() {
+        this.formDetector = new FormDetector();
+        this.init();
+    }
+
+    private init() {
+        // Initial scan
+        this.scanForForms();
+
+        // Listen for DOM changes
+        const observer = new MutationObserver(() => this.scanForForms());
+        observer.observe(document.body, { childList: true, subtree: true });
+
+        // Listen for vault updates
+        chrome.runtime.onMessage.addListener((request) => {
+            if (request.action === 'VAULT_UPDATED') {
+                this.vaultEntries = request.entries;
+            }
+        });
+
+        // Notify background we are ready
+        chrome.runtime.sendMessage({ action: 'CONTENT_SCRIPT_READY', url: window.location.href });
+
+        // Perform security check
+        SiteSecurityService.checkSite(window.location.href).then(result => {
+            if (result.isSafe) {
+                this._siteIsSafe = true;
+            } else {
+                SiteSecurityService.showSecurityWarning(result.threat || 'Unknown threat');
+            }
+        });
+    }
+
+    private scanForForms() {
+        const forms = this.formDetector.detectLoginForms();
+        if (forms.length > 0) {
+            this.currentForms = forms;
+            this.attachFormListeners(forms);
+            this.attachFieldListeners(forms);
+        }
+    }
+
     private attachFormListeners(forms: LoginForm[]) {
         forms.forEach((loginForm) => {
             if (!loginForm.form) return;
@@ -280,3 +326,13 @@ class ContentScript {
 
 // Initialize content script
 new ContentScript();
+
+// Inject installation marker for the main web app to detect
+const marker = document.createElement('div');
+marker.id = 'lens-vault-installed-marker';
+marker.style.display = 'none';
+document.body.appendChild(marker);
+
+// Also set a global flag
+// @ts-ignore
+window.lensVaultExtensionInstalled = true;
