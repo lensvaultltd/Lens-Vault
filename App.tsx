@@ -215,8 +215,17 @@ const ExtensionPrompt = () => {
     }
   };
 
+  // TODO: AFTER PUBLISHING: Paste your Chrome Web Store link here.
+  // Example: 'https://chrome.google.com/webstore/detail/lens-vault/...'
+  const CHROME_STORE_LINK = '';
+
   const handleInstall = () => {
-    // Show instruction to load local extension
+    if (CHROME_STORE_LINK) {
+      window.open(CHROME_STORE_LINK, '_blank');
+      return;
+    }
+
+    // Fallback: Show instruction to load local extension
     toast({
       title: "How to Install",
       description: (

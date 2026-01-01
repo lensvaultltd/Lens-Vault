@@ -1,3 +1,4 @@
+import React from 'react';
 import { Input } from './ui/input';
 import { useToast } from './ui/use-toast';
 import { RedemptionService } from '../services/redemptionService';
