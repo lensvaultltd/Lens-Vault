@@ -23,15 +23,18 @@ const AiAuditor: React.FC<AiAuditorProps> = ({ entries }) => {
 
   const vaultEmails = useMemo(() => {
     const emails = new Set<string>();
-    entries.forEach(entry => {
-      // Check for login type OR if it has username field (more lenient)
-      if ((entry.type === 'login' || entry.username) && entry.username && entry.username.includes('@')) {
-        emails.add(entry.username);
-      }
-      if (entry.type === 'identity' && entry.email) {
-        emails.add(entry.email);
-      }
-    });
+    // Robust check: Ensure entries exists and is an array before iterating
+    if (Array.isArray(entries)) {
+      entries.forEach(entry => {
+        // Check for login type OR if it has username field (more lenient)
+        if ((entry.type === 'login' || entry.username) && entry.username && entry.username.includes('@')) {
+          emails.add(entry.username);
+        }
+        if (entry.type === 'identity' && entry.email) {
+          emails.add(entry.email);
+        }
+      });
+    }
     return Array.from(emails);
   }, [entries]);
 
