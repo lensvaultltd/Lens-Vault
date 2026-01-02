@@ -1,5 +1,6 @@
 import React from 'react';
 import { Input } from './ui/input';
+import { Button } from './ui/button';
 import { useToast } from './ui/use-toast';
 import { RedemptionService } from '../services/redemptionService';
 import {
@@ -11,8 +12,43 @@ import {
     DialogTrigger,
     DialogFooter,
 } from "./ui/dialog";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from './ui/card';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "./ui/alert-dialog";
+import {
+    FileDown,
+    FileUp,
+    Key,
+    Trash2,
+    ShieldAlert
+} from 'lucide-react';
+import Billing from './Billing';
+import { User, Subscription } from '../types';
 
-// ... (previous imports)
+interface SettingsViewProps {
+    user: User;
+    subscription: Subscription;
+    onPlanChange: (plan: 'free' | 'premium' | 'family' | 'business') => void;
+    onImportExportOpen: () => void;
+    onChangePassword: () => void;
+    onClearData: () => void;
+    onDeleteAccount: () => void;
+}
 
 const SettingsView: React.FC<SettingsViewProps> = ({
     user,
