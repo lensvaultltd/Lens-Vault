@@ -624,6 +624,9 @@ function App() {
       }
     }
 
+    // Ensure Supabase session is cleared
+    await apiService.logout();
+
     setUser(null);
     setMasterPassword(null);
     EncryptionService.setMasterPassword(null);
