@@ -347,11 +347,24 @@ function App() {
 
     // Sync Subscription from User Object
     if (authedUser.subscription) {
+      let plan = authedUser.subscription as any;
+
+      // Enforce Expiration
+      if (authedUser.subscriptionValidUntil) {
+        const now = new Date();
+        const validUntil = new Date(authedUser.subscriptionValidUntil);
+        if (validUntil < now) {
+          plan = 'free'; // Expired
+          // Optional: Toast to inform user
+          setTimeout(() => toast({ title: "Premium Expired", description: "Your premium access has ended.", variant: "default" }), 2000);
+        }
+      }
+
       setSubscription(prev => ({
         ...prev,
-        plan: authedUser.subscription as any,
-        status: authedUser.subscription === 'free' ? 'trialing' : 'active', // simplified logic
-        trialEndsAt: authedUser.subscription === 'free' ? prev.trialEndsAt : null
+        plan: plan,
+        status: plan === 'free' ? 'trialing' : 'active', // simplified logic
+        trialEndsAt: plan === 'free' ? prev.trialEndsAt : null
       }));
     }
   };

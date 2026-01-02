@@ -87,10 +87,18 @@ export const apiService = {
 
       console.log("Login: Supabase auth successful");
 
-      // Fetch user data from database
+      // Fetch user data from database and join with subscriptions if needed
+      // Currently, subscription info might be in 'users' or 'subscriptions' table.
+      // RedemptionService upserts to 'subscriptions' table.
       const { data: userData, error: userError } = await supabase
         .from('users')
-        .select('*')
+        .select(`
+          *,
+          subscriptions (
+            tier,
+            valid_until
+          )
+        `)
         .eq('id', data.user.id)
         .single();
 
@@ -98,10 +106,30 @@ export const apiService = {
         console.error("Failed to fetch user data:", userError);
       }
 
+      // Determine subscription from joined data or fallback
+      let subPlan = 'free';
+      let validUntil: Date | undefined = undefined;
+
+      if (userData?.subscriptions && Array.isArray(userData.subscriptions) && userData.subscriptions.length > 0) {
+        // If it returns an array (likely due to foreign key), take the first one
+        const sub = userData.subscriptions[0];
+        subPlan = sub.tier || 'free';
+        if (sub.valid_until) validUntil = new Date(sub.valid_until);
+      } else if (userData?.subscriptions && !Array.isArray(userData.subscriptions)) {
+        // If single object
+        const sub = userData.subscriptions as any;
+        subPlan = sub.tier || 'free';
+        if (sub.valid_until) validUntil = new Date(sub.valid_until);
+      } else {
+        // Fallback to user table column if used previously
+        subPlan = (userData?.subscription_plan as any) || 'free';
+      }
+
       const user: User = {
         id: data.user.id,
         email: data.user.email!,
-        subscription: (userData?.subscription_plan as any) || 'free',
+        subscription: subPlan,
+        subscriptionValidUntil: validUntil,
         isAdmin: userData?.is_admin || false,
         createdAt: new Date(data.user.created_at),
       };

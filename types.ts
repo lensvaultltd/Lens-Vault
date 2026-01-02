@@ -88,6 +88,7 @@ export interface User {
   email: string;
   isAdmin?: boolean;
   subscription?: string;
+  subscriptionValidUntil?: Date; // Added for expiration check
   createdAt?: Date;
   updatedAt?: Date;
 }
