@@ -232,10 +232,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                     <Dialog>
                         <DialogTrigger asChild>
                             <Button
-                                className="w-full sm:w-auto backdrop-blur-md bg-white/10 hover:bg-white/20 border border-white/20 text-white shadow-lg transition-all duration-300 group"
-                                style={{
-                                    background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)'
-                                }}
+                                className="w-full sm:w-auto mt-2 backdrop-blur-md bg-slate-900/5 hover:bg-slate-900/10 dark:bg-white/10 dark:hover:bg-white/20 border border-slate-900/10 dark:border-white/20 text-slate-900 dark:text-white shadow-sm transition-all duration-300 group"
                             >
                                 <span className="mr-2 group-hover:scale-110 transition-transform">✨</span>
                                 Send Feedback
